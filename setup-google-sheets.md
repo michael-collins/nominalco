@@ -45,21 +45,115 @@
 - **Dropbox**: Free 2GB (auto-converts URLs)
 - **GitHub**: If you're comfortable with git
 
-## Step 3: Set Up Sheet.best API
+# 🚀 Direct Google Sheets Setup (No Third-Party Services!)
 
-1. **Go to**: [sheet.best](https://sheet.best) (100% free)
-2. **Paste your sheet URL**: Copy from address bar
-3. **Get your API endpoint**: `https://sheet.best/api/sheets/YOUR_ID/projects`
-4. **Update your code**: Replace the URL in `script.js`
+## Step 1: Create Your Google Sheet
 
-## Step 4: Update Your Website Code
+1. **Create New Sheet**: Go to [sheets.google.com](https://sheets.google.com) → New Blank Sheet
+2. **Import the CSV**: 
+   - File → Import → Upload
+   - Select `nominalco-portfolio-template.csv`
+   - Choose "Replace spreadsheet"
+3. **Make it Public**:
+   - Click "Share" → "Change to anyone with the link"
+   - Set to "Viewer" (this is safe - only viewing, not editing)
 
-Find this line in `/workspaces/nominalco/script.js`:
-```javascript
-const response = await fetch('https://sheet.best/api/sheets/d1234567890abcdef/projects');
-```
+## Step 2: Get Your Sheet ID
 
-Replace `d1234567890abcdef` with your actual Sheet ID from Sheet.best.
+1. **Copy the URL** from your address bar
+2. **Extract the Sheet ID** - it's the long string between `/d/` and `/edit`:
+   ```
+   https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit
+   ```
+
+## Step 3: Update Your Website Code
+
+1. **Open** `/workspaces/nominalco/script.js`
+2. **Find this line** (around line 17):
+   ```javascript
+   const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
+   ```
+3. **Replace** with your actual Sheet ID:
+   ```javascript
+   const SHEET_ID = 'YOUR_SHEET_ID_HERE';
+   ```
+
+## Step 4: Sheet Name (if needed)
+
+If your Google Sheet tab is named something other than "Sheet1":
+
+1. **Find this line**:
+   ```javascript
+   const SHEET_NAME = 'Sheet1';
+   ```
+2. **Change** to your actual sheet name:
+   ```javascript
+   const SHEET_NAME = 'Portfolio'; // or whatever you named it
+   ```
+
+## ✨ Benefits of Direct Connection:
+
+- ✅ **No Third-Party Services**: Direct connection to Google Sheets
+- ✅ **100% Free**: No external service fees or limits
+- ✅ **More Reliable**: One less service that could break
+- ✅ **Faster Updates**: Changes appear immediately
+- ✅ **Better Privacy**: Your data stays with Google only
+- ✅ **No Setup Complexity**: Just share the sheet and update one ID
+
+## 🔧 How It Works:
+
+Google Sheets has a built-in CSV export feature. The code:
+1. **Fetches** your sheet as CSV directly from Google
+2. **Parses** the CSV data automatically
+3. **Converts** it to the format your website needs
+4. **Handles** all the image URL processing and formatting
+
+## 📊 Managing Your Content:
+
+### **Adding Projects:**
+1. **Add a new row** to your Google Sheet
+2. **Fill in the columns** following the existing format
+3. **Save** (auto-saves) - changes appear on website instantly!
+
+### **Image Hosting (unchanged):**
+- **Google Drive**: Upload → Share → Paste URL (auto-converts)
+- **Imgur**: Drag & drop → Copy direct link
+- **Any public image URL** works
+
+### **Column Structure:**
+- `id` - Sequential numbers (1, 2, 3...)
+- `title` - Project name
+- `description` - Short description for grid
+- `image` - Main project image URL
+- `tags` - Comma-separated (Mobile,Hardware,Design)
+- `detailImages` - Multiple URLs separated by commas
+- `longDescription` - Full project description
+
+## 🎯 Pro Tips:
+
+### **Sheet Organization:**
+- Keep the first row as headers
+- Don't delete the header row
+- Add projects as new rows
+- Use consistent ID numbering
+
+### **Troubleshooting:**
+- Sheet must be "Anyone with link can view"
+- Sheet ID must be exact (no extra characters)
+- Column names must match exactly
+- Check browser console for error messages
+
+## 🚨 Security Note:
+
+Making your sheet public for viewing is safe because:
+- ✅ **Read-only access** - nobody can edit your content
+- ✅ **No personal info** - only contains project information you want to showcase
+- ✅ **Easy to revoke** - you can make it private anytime
+- ✅ **Standard practice** - many portfolios work this way
+
+## 🎉 You're All Set!
+
+Your portfolio now updates directly from Google Sheets with zero third-party dependencies. Just edit your sheet and watch the changes appear on your website instantly!
 
 ## 📊 Example Google Sheet Template
 

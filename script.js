@@ -19,19 +19,25 @@ class PortfolioManager {
 
     async loadProjects() {
         try {
-            // Try to load from Google Sheets first
-            const response = await fetch('https://sheet.best/api/sheets/10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc/projects');
+            // Pull directly from Google Sheets CSV export (no third-party service needed)
+            const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
+            const SHEET_NAME = 'Sheet1'; // Change this if your sheet has a different name
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+            
+            const response = await fetch(csvUrl);
             
             if (!response.ok) {
                 throw new Error('Failed to fetch from Google Sheets');
             }
             
-            const data = await response.json();
+            const csvText = await response.text();
+            const data = this.parseCSV(csvText);
             this.projects = this.transformSheetData(data);
             
-            console.log('✅ Projects loaded from Google Sheets');
+            console.log('✅ Projects loaded directly from Google Sheets');
         } catch (error) {
             console.warn('⚠️ Could not load from Google Sheets, using local data');
+            console.warn('Error:', error.message);
             
             // Fallback to local JSON file
             try {
@@ -42,6 +48,52 @@ class PortfolioManager {
                 this.projects = this.getDefaultProjects();
             }
         }
+    }
+
+    parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const headers = this.parseCSVLine(lines[0]);
+        const data = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            if (lines[i].trim()) {
+                const values = this.parseCSVLine(lines[i]);
+                const row = {};
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+                data.push(row);
+            }
+        }
+
+        return data;
+    }
+
+    parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    current += '"';
+                    i++; // Skip next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current.trim());
+        return result;
     }
 
     transformSheetData(sheetData) {
