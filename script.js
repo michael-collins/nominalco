@@ -19,54 +19,167 @@ class PortfolioManager {
 
     async loadProjects() {
         try {
-            const response = await fetch('projects.json');
-            this.projects = await response.json();
+            // Try to load from Google Sheets first
+            const response = await fetch('https://sheet.best/api/sheets/10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc/projects');
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch from Google Sheets');
+            }
+            
+            const data = await response.json();
+            this.projects = this.transformSheetData(data);
+            
+            console.log('✅ Projects loaded from Google Sheets');
         } catch (error) {
-            console.warn('Could not load projects.json, using default data');
-            this.projects = this.getDefaultProjects();
+            console.warn('⚠️ Could not load from Google Sheets, using local data');
+            
+            // Fallback to local JSON file
+            try {
+                const response = await fetch('projects.json');
+                this.projects = await response.json();
+            } catch (fallbackError) {
+                console.warn('⚠️ Could not load projects.json, using default data');
+                this.projects = this.getDefaultProjects();
+            }
         }
+    }
+
+    transformSheetData(sheetData) {
+        return sheetData.map(row => {
+            // Handle empty rows
+            if (!row.title || row.title.trim() === '') {
+                return null;
+            }
+
+            return {
+                id: parseInt(row.id) || Date.now(),
+                title: row.title?.trim() || 'Untitled Project',
+                description: row.description?.trim() || '',
+                image: this.processImageUrl(row.image),
+                tags: this.processTags(row.tags),
+                detailImages: this.processDetailImages(row.detailImages),
+                longDescription: this.processLongDescription(row.longDescription)
+            };
+        }).filter(project => project !== null); // Remove empty rows
+    }
+
+    processImageUrl(imageUrl) {
+        if (!imageUrl || imageUrl.trim() === '') {
+            return 'https://via.placeholder.com/600x400/f8f9fa/495057?text=Add+Image';
+        }
+
+        const url = imageUrl.trim();
+
+        // Handle Google Drive URLs - convert to direct link
+        if (url.includes('drive.google.com')) {
+            return this.convertGoogleDriveUrl(url);
+        }
+
+        // Handle Google Photos URLs
+        if (url.includes('photos.google.com') || url.includes('photos.app.goo.gl')) {
+            console.warn('⚠️ Google Photos URLs may not work. Use Google Drive or Imgur instead.');
+            return url;
+        }
+
+        // Handle Dropbox URLs - add ?raw=1
+        if (url.includes('dropbox.com') && !url.includes('raw=1')) {
+            return url.includes('?') ? `${url}&raw=1` : `${url}?raw=1`;
+        }
+
+        // Return URL as-is for other services (Imgur, Cloudinary, etc.)
+        return url;
+    }
+
+    convertGoogleDriveUrl(url) {
+        // Extract file ID from various Google Drive URL formats
+        let fileId = '';
+        
+        if (url.includes('/file/d/')) {
+            fileId = url.split('/file/d/')[1].split('/')[0];
+        } else if (url.includes('id=')) {
+            fileId = url.split('id=')[1].split('&')[0];
+        }
+
+        if (fileId) {
+            return `https://drive.google.com/uc?export=view&id=${fileId}`;
+        }
+
+        console.warn('⚠️ Could not convert Google Drive URL. Make sure it\'s shareable.');
+        return url;
+    }
+
+    processTags(tagsString) {
+        if (!tagsString || tagsString.trim() === '') {
+            return [];
+        }
+
+        return tagsString.split(',')
+            .map(tag => tag.trim())
+            .filter(tag => tag !== '');
+    }
+
+    processDetailImages(detailImagesString) {
+        if (!detailImagesString || detailImagesString.trim() === '') {
+            return [];
+        }
+
+        return detailImagesString.split(',')
+            .map(url => this.processImageUrl(url.trim()))
+            .filter(url => url !== '');
+    }
+
+    processLongDescription(longDesc) {
+        if (!longDesc || longDesc.trim() === '') {
+            return '';
+        }
+
+        // Convert Google Sheets line breaks and formatting
+        return longDesc
+            .replace(/\\n/g, '\n')  // Handle escaped newlines
+            .replace(/\n\n/g, '\n\n') // Preserve paragraph breaks
+            .trim();
     }
 
     getDefaultProjects() {
         return [
             {
                 id: 1,
-                title: "E-commerce Mobile App",
-                description: "A clean and intuitive mobile shopping experience focused on conversion and user engagement.",
-                image: "https://via.placeholder.com/600x400/f5f5f5/666?text=E-commerce+App",
-                tags: ["Mobile", "E-commerce", "UI/UX"],
+                title: "Modular Audio Interface",
+                description: "Hardware-software system for professional audio production with modular connectivity.",
+                image: "https://via.placeholder.com/600x400/2c2c2c/ffffff?text=Modular+Audio+Interface",
+                tags: ["Hardware", "Audio", "Interface"],
                 detailImages: [
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=App+Screens",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=User+Flow",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Design+System"
+                    "https://via.placeholder.com/800x600/2c2c2c/ffffff?text=Interface+Overview",
+                    "https://via.placeholder.com/800x600/3c3c3c/ffffff?text=Module+System",
+                    "https://via.placeholder.com/800x600/4c4c4c/ffffff?text=Software+Control"
                 ],
-                longDescription: "This project involved redesigning a mobile e-commerce platform to improve user experience and increase conversion rates. The challenge was to create a streamlined shopping experience that would work across different device sizes while maintaining the brand's premium feel.\n\nKey achievements:\n• 40% increase in conversion rate\n• 25% reduction in cart abandonment\n• Improved accessibility compliance\n• Streamlined checkout process"
+                longDescription: "Development of a modular audio interface system that bridges professional studio equipment with modern digital workflows. The project required extensive research into signal processing, electromagnetic compatibility, and user interface design.\n\nTechnical specifications:\n• 24-bit/192kHz conversion\n• Modular I/O expansion\n• Software-controlled routing matrix\n• USB-C and Thunderbolt connectivity\n• Field-replaceable components"
             },
             {
                 id: 2,
-                title: "SaaS Dashboard Design",
-                description: "Data visualization and workflow optimization for a B2B analytics platform.",
-                image: "https://via.placeholder.com/600x400/f5f5f5/666?text=SaaS+Dashboard",
-                tags: ["Web", "SaaS", "Data Viz"],
+                title: "Inventory Management Platform",
+                description: "Digital tool for tracking and optimizing physical product inventory across multiple locations.",
+                image: "https://via.placeholder.com/600x400/f8f9fa/495057?text=Inventory+Platform",
+                tags: ["Software", "Logistics", "Analytics"],
                 detailImages: [
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Dashboard+Overview",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Analytics+View",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Settings+Panel"
+                    "https://via.placeholder.com/800x600/f8f9fa/495057?text=Dashboard+View",
+                    "https://via.placeholder.com/800x600/e9ecef/495057?text=Analytics+Panel",
+                    "https://via.placeholder.com/800x600/dee2e6/495057?text=Mobile+Interface"
                 ],
-                longDescription: "A comprehensive redesign of a B2B analytics dashboard focusing on data clarity and user workflow efficiency. The project required extensive user research and iterative testing to ensure the complex data sets remained accessible and actionable.\n\nKey features:\n• Customizable dashboard layouts\n• Advanced filtering and search\n• Real-time data updates\n• Export and sharing capabilities\n• Mobile-responsive design"
+                longDescription: "Comprehensive platform for managing physical inventory across distributed locations. System integrates barcode scanning, predictive analytics, and automated reordering to minimize stockouts while optimizing storage costs.\n\nCore functionality:\n• Real-time inventory tracking\n• Predictive demand modeling\n• Automated procurement workflows\n• Multi-location synchronization\n• Integration with existing ERP systems"
             },
             {
                 id: 3,
-                title: "Brand Identity System",
-                description: "Complete visual identity and brand guidelines for a sustainable fashion startup.",
-                image: "https://via.placeholder.com/600x400/f5f5f5/666?text=Brand+Identity",
-                tags: ["Branding", "Visual Identity", "Guidelines"],
+                title: "Sustainable Lighting System",
+                description: "Environmentally conscious lighting fixtures with intelligent control and minimal material waste.",
+                image: "https://via.placeholder.com/600x400/e8f5e8/2e7d32?text=Lighting+System",
+                tags: ["Lighting", "Sustainability", "IoT"],
                 detailImages: [
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Logo+Variations",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Color+Palette",
-                    "https://via.placeholder.com/800x600/f5f5f5/666?text=Typography+System"
+                    "https://via.placeholder.com/800x600/e8f5e8/2e7d32?text=Fixture+Design",
+                    "https://via.placeholder.com/800x600/c8e6c9/2e7d32?text=Control+Interface",
+                    "https://via.placeholder.com/800x600/a5d6a7/2e7d32?text=Installation"
                 ],
-                longDescription: "Development of a complete brand identity system for an eco-conscious fashion startup. The project included logo design, color palette, typography, packaging design, and comprehensive brand guidelines.\n\nDeliverables included:\n• Primary and secondary logos\n• Color system and palette\n• Typography hierarchy\n• Photography style guide\n• Packaging design templates\n• Digital and print applications"
+                longDescription: "Design and engineering of a modular lighting system prioritizing material efficiency and longevity. Each fixture incorporates recyclable components, field-replaceable LED modules, and intelligent dimming controls.\n\nSustainability features:\n• 95% recyclable materials\n• 50,000+ hour LED lifespan\n• Daylight harvesting sensors\n• Occupancy-based dimming\n• Minimal packaging design\n• Local manufacturing capability"
             }
         ];
     }
