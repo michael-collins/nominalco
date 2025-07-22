@@ -1,0 +1,54 @@
+[
+    {
+        "id": 1,
+        "title": "E-commerce Mobile App",
+        "description": "A clean and intuitive mobile shopping experience focused on conversion and user engagement.",
+        "image": "https://via.placeholder.com/600x400/f8f9fa/495057?text=E-commerce+Mobile+App",
+        "tags": ["Mobile", "E-commerce", "UI/UX"],
+        "detailImages": [
+            "https://via.placeholder.com/800x600/f8f9fa/495057?text=App+Screens+Overview",
+            "https://via.placeholder.com/800x600/e9ecef/495057?text=User+Flow+Diagram",
+            "https://via.placeholder.com/800x600/dee2e6/495057?text=Design+System"
+        ],
+        "longDescription": "This project involved redesigning a mobile e-commerce platform to improve user experience and increase conversion rates. The challenge was to create a streamlined shopping experience that would work across different device sizes while maintaining the brand's premium feel.\n\nKey achievements:\n• 40% increase in conversion rate\n• 25% reduction in cart abandonment\n• Improved accessibility compliance\n• Streamlined checkout process"
+    },
+    {
+        "id": 2,
+        "title": "SaaS Dashboard Design",
+        "description": "Data visualization and workflow optimization for a B2B analytics platform.",
+        "image": "https://via.placeholder.com/600x400/e3f2fd/1565c0?text=SaaS+Dashboard",
+        "tags": ["Web", "SaaS", "Data Viz"],
+        "detailImages": [
+            "https://via.placeholder.com/800x600/e3f2fd/1565c0?text=Dashboard+Overview",
+            "https://via.placeholder.com/800x600/bbdefb/1565c0?text=Analytics+Views",
+            "https://via.placeholder.com/800x600/90caf9/1565c0?text=Settings+Panel"
+        ],
+        "longDescription": "A comprehensive redesign of a B2B analytics dashboard focusing on data clarity and user workflow efficiency. The project required extensive user research and iterative testing to ensure the complex data sets remained accessible and actionable.\n\nKey features:\n• Customizable dashboard layouts\n• Advanced filtering and search\n• Real-time data updates\n• Export and sharing capabilities\n• Mobile-responsive design"
+    },
+    {
+        "id": 3,
+        "title": "Brand Identity System",
+        "description": "Complete visual identity and brand guidelines for a sustainable fashion startup.",
+        "image": "https://via.placeholder.com/600x400/f3e5f5/7b1fa2?text=Brand+Identity",
+        "tags": ["Branding", "Visual Identity", "Guidelines"],
+        "detailImages": [
+            "https://via.placeholder.com/800x600/f3e5f5/7b1fa2?text=Logo+Variations",
+            "https://via.placeholder.com/800x600/e1bee7/7b1fa2?text=Color+Palette",
+            "https://via.placeholder.com/800x600/ce93d8/7b1fa2?text=Typography+System"
+        ],
+        "longDescription": "Development of a complete brand identity system for an eco-conscious fashion startup. The project included logo design, color palette, typography, packaging design, and comprehensive brand guidelines.\n\nDeliverables included:\n• Primary and secondary logos\n• Color system and palette\n• Typography hierarchy\n• Photography style guide\n• Packaging design templates\n• Digital and print applications"
+    },
+    {
+        "id": 4,
+        "title": "Financial Planning App",
+        "description": "Personal finance management tool with intuitive budgeting and goal tracking features.",
+        "image": "https://via.placeholder.com/600x400/e8f5e8/2e7d32?text=Finance+App",
+        "tags": ["Mobile", "Fintech", "UX Research"],
+        "detailImages": [
+            "https://via.placeholder.com/800x600/e8f5e8/2e7d32?text=App+Interface",
+            "https://via.placeholder.com/800x600/c8e6c9/2e7d32?text=Budget+Tracking",
+            "https://via.placeholder.com/800x600/a5d6a7/2e7d32?text=Goal+Setting"
+        ],
+        "longDescription": "Designed a comprehensive personal finance app that helps users manage their money, track expenses, and achieve financial goals. The project focused on making complex financial data digestible and actionable for everyday users.\n\nCore features:\n• Automated expense categorization\n• Visual budget tracking\n• Goal-based savings plans\n• Bill reminders and alerts\n• Investment portfolio overview"
+    }
+]
