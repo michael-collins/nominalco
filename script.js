@@ -1,3 +1,269 @@
+// Content management from Google Sheets
+class ContentManager {
+    constructor() {
+        this.content = {};
+        this.init();
+    }
+
+    async init() {
+        await this.loadContent();
+        this.applyContent();
+    }
+
+    async loadContent() {
+        try {
+            // Pull content from second Google Sheets tab
+            const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
+            const CONTENT_SHEET_NAME = 'Content'; // Second sheet for site content
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${CONTENT_SHEET_NAME}`;
+            
+            const response = await fetch(csvUrl);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch content from Google Sheets');
+            }
+            
+            const csvText = await response.text();
+            const data = this.parseCSV(csvText);
+            this.content = this.transformContentData(data);
+            
+            console.log('✅ Content loaded from Google Sheets');
+        } catch (error) {
+            console.warn('⚠️ Could not load content from Google Sheets, using default content');
+            console.warn('Error:', error.message);
+            this.content = this.getDefaultContent();
+        }
+    }
+
+    parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const result = [];
+        let currentRow = [];
+        let currentField = '';
+        let inQuotes = false;
+
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex];
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Escaped quote within quoted field
+                        currentField += '"';
+                        i++; // Skip next quote
+                    } else {
+                        // Toggle quote state
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // Field separator - end current field
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else {
+                    // Regular character
+                    currentField += char;
+                }
+            }
+            
+            // End of line
+            if (inQuotes) {
+                // We're inside a quoted field that spans multiple lines
+                currentField += '\n'; // Preserve the line break
+            } else {
+                // End of row
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+                    result.push([...currentRow]);
+                }
+                currentRow = [];
+                currentField = '';
+            }
+        }
+        
+        // Handle final row if exists
+        if (currentRow.length > 0 || currentField !== '') {
+            if (currentField !== '') currentRow.push(currentField.trim());
+            if (currentRow.some(field => field !== '')) {
+                result.push(currentRow);
+            }
+        }
+
+        // Convert to object format
+        if (result.length === 0) return [];
+        
+        const headers = result[0];
+        const data = [];
+
+        for (let i = 1; i < result.length; i++) {
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header] = result[i][index] || '';
+            });
+            data.push(row);
+        }
+
+        return data;
+    }
+
+    parseCSVLine(line) {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                if (inQuotes && line[i + 1] === '"') {
+                    current += '"';
+                    i++; // Skip next quote
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        
+        result.push(current.trim());
+        return result;
+    }
+
+    transformContentData(sheetData) {
+        const content = {};
+        
+        sheetData.forEach(row => {
+            if (row.key && row.key.trim() !== '') {
+                content[row.key.trim()] = row.value?.trim() || '';
+            }
+        });
+
+        return content;
+    }
+
+    getDefaultContent() {
+        return {
+            'site.title': 'nominalco',
+            'site.logoHeavy': 'nominal',
+            'site.logoLight': 'co',
+            'hero.title': 'Multi-disciplinary art and design studio.',
+            'hero.subtitle': 'We design objects, interfaces, and ideas.',
+            'work.title': 'Selected Work',
+            'about.title': 'About nominalco',
+            'about.paragraph1': 'nominalco is an art and design practice specializing in the development of functional, bold, and appealing artifacts, stories, and experiences.',
+            'about.paragraph2': 'Our process is elastic. We adapt bespoke workflows to reveal compelling solutions for each of our projects.',
+            'contact.title': 'Contact',
+            'contact.email': 'hello@nominalco.com'
+        };
+    }
+
+    applyContent() {
+        // Apply basic content mappings
+        const mappings = {
+            'site.title': () => document.title = this.content['site.title'] || 'nominalco',
+            'site.logoHeavy': () => {
+                const elem = document.querySelector('.logo-heavy');
+                if (elem) elem.textContent = this.content['site.logoHeavy'] || 'nominal';
+            },
+            'site.logoLight': () => {
+                const elem = document.querySelector('.logo-light');
+                if (elem) elem.textContent = this.content['site.logoLight'] || 'co';
+            },
+            'hero.title': () => {
+                const elem = document.querySelector('.hero-title');
+                if (elem) elem.textContent = this.content['hero.title'] || 'Multi-disciplinary art and design studio.';
+            },
+            'hero.subtitle': () => {
+                const elem = document.querySelector('.hero-subtitle');
+                if (elem) elem.textContent = this.content['hero.subtitle'] || 'We design objects, interfaces, and ideas.';
+            },
+            'work.title': () => {
+                const elem = document.querySelector('#work .section-title');
+                if (elem) elem.textContent = this.content['work.title'] || 'Selected Work';
+            },
+            'about.title': () => {
+                const elem = document.querySelector('#about .section-title');
+                if (elem) elem.textContent = this.content['about.title'] || 'About nominalco';
+            },
+            'contact.title': () => {
+                const elem = document.querySelector('#contact .section-title');
+                if (elem) elem.textContent = this.content['contact.title'] || 'Contact';
+            },
+            'contact.email': () => {
+                const elem = document.querySelector('.contact-link');
+                const email = this.content['contact.email'] || 'hello@nominalco.com';
+                if (elem) {
+                    elem.textContent = email;
+                    elem.href = `mailto:${email}`;
+                }
+            }
+        };
+
+        // Apply basic mappings
+        Object.keys(mappings).forEach(key => {
+            if (this.content[key] !== undefined) {
+                mappings[key]();
+            }
+        });
+
+        // Handle dynamic content areas
+        this.applyDynamicContent();
+    }
+
+    applyDynamicContent() {
+        // Handle about section paragraphs dynamically
+        this.updateDynamicSection('about', '.about-content', ['about.title']);
+        
+        // You can add more dynamic sections here as needed
+        // this.updateDynamicSection('services', '.services-content', ['services.title']);
+    }
+
+    updateDynamicSection(sectionName, containerSelector, excludeKeys = []) {
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
+        // Find all content keys for this section
+        const sectionKeys = Object.keys(this.content)
+            .filter(key => key.startsWith(`${sectionName}.`) && !excludeKeys.includes(key))
+            .sort();
+
+        if (sectionKeys.length === 0) {
+            // If no dynamic content, ensure we have default paragraphs
+            const defaultKeys = Object.keys(this.getDefaultContent())
+                .filter(key => key.startsWith(`${sectionName}.`) && !excludeKeys.includes(key))
+                .sort();
+            
+            // Remove existing paragraphs
+            const existingParagraphs = container.querySelectorAll('p');
+            existingParagraphs.forEach(p => p.remove());
+
+            // Create default paragraphs
+            defaultKeys.forEach(key => {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = this.getDefaultContent()[key];
+                container.appendChild(paragraph);
+            });
+            return;
+        }
+
+        // Remove existing paragraphs (but keep title and other elements)
+        const existingParagraphs = container.querySelectorAll('p');
+        existingParagraphs.forEach(p => p.remove());
+
+        // Create new paragraphs for each content key
+        sectionKeys.forEach(key => {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = this.content[key];
+            container.appendChild(paragraph);
+        });
+    }
+}
+
 // Project data and functionality
 class PortfolioManager {
     constructor() {
@@ -19,57 +285,159 @@ class PortfolioManager {
 
     async loadProjects() {
         try {
-            // Pull directly from Google Sheets CSV export (no third-party service needed)
+            // Try JSON format first (better formatting preservation)
             const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
             const SHEET_NAME = 'Sheet1'; // Change this if your sheet has a different name
-            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+            const jsonUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}`;
             
-            const response = await fetch(csvUrl);
+            const response = await fetch(jsonUrl);
             
             if (!response.ok) {
                 throw new Error('Failed to fetch from Google Sheets');
             }
             
-            const csvText = await response.text();
-            const data = this.parseCSV(csvText);
-            this.projects = this.transformSheetData(data);
+            const jsonText = await response.text();
+            // Remove Google's JSONP wrapper
+            const cleanJson = jsonText.replace(/^.*?({.*}).*$/, '$1');
+            const data = JSON.parse(cleanJson);
+            this.projects = this.transformGoogleSheetsData(data);
             
-            console.log('✅ Projects loaded directly from Google Sheets');
+            console.log('✅ Projects loaded directly from Google Sheets (JSON format)');
         } catch (error) {
-            console.warn('⚠️ Could not load from Google Sheets, using local data');
+            console.warn('⚠️ Could not load from Google Sheets JSON, trying CSV format');
             console.warn('Error:', error.message);
             
-            // Fallback to local JSON file
             try {
-                const response = await fetch('projects.json');
-                this.projects = await response.json();
-            } catch (fallbackError) {
-                console.warn('⚠️ Could not load projects.json, using default data');
-                this.projects = this.getDefaultProjects();
+                // Fallback to CSV format
+                const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
+                const SHEET_NAME = 'Sheet1';
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+                
+                const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error('CSV fetch failed');
+                
+                const csvText = await response.text();
+                const data = this.parseCSV(csvText);
+                this.projects = this.transformSheetData(data);
+                
+                console.log('✅ Projects loaded from Google Sheets (CSV fallback)');
+            } catch (csvError) {
+                console.warn('⚠️ Could not load from Google Sheets, using local data');
+                console.warn('CSV Error:', csvError.message);
+                
+                // Final fallback to local JSON file
+                try {
+                    const response = await fetch('projects.json');
+                    this.projects = await response.json();
+                } catch (fallbackError) {
+                    console.warn('⚠️ Could not load projects.json, using default data');
+                    this.projects = this.getDefaultProjects();
+                }
             }
         }
     }
 
+    transformGoogleSheetsData(googleData) {
+        const rows = googleData.table.rows;
+        const projects = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row.c || !row.c[1] || !row.c[1].v) continue; // Skip empty rows
+
+            const rawDescription = row.c[2]?.v?.trim() || '';
+            const project = {
+                id: parseInt(row.c[0]?.v) || (i + 1),
+                title: row.c[1]?.v?.trim() || 'Untitled Project',
+                description: rawDescription,
+                descriptionHtml: this.convertMarkdownToHtml(rawDescription),
+                image: this.processImageUrl(row.c[3]?.v),
+                tags: this.processTags(row.c[4]?.v),
+                detailImages: this.processDetailImages(row.c[5]?.v),
+                longDescription: this.processLongDescription(row.c[6]?.v)
+            };
+
+            projects.push(project);
+        }
+
+        return projects;
+    }
+
     parseCSV(csvText) {
         const lines = csvText.split('\n');
-        const headers = this.parseCSVLine(lines[0]);
+        const result = [];
+        let currentRow = [];
+        let currentField = '';
+        let inQuotes = false;
+
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex];
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Escaped quote within quoted field
+                        currentField += '"';
+                        i++; // Skip next quote
+                    } else {
+                        // Toggle quote state
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // Field separator - end current field
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else {
+                    // Regular character
+                    currentField += char;
+                }
+            }
+            
+            // End of line
+            if (inQuotes) {
+                // We're inside a quoted field that spans multiple lines
+                currentField += '\n'; // Preserve the line break
+            } else {
+                // End of row
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+                    result.push([...currentRow]);
+                }
+                currentRow = [];
+                currentField = '';
+            }
+        }
+        
+        // Handle final row if exists
+        if (currentRow.length > 0 || currentField !== '') {
+            if (currentField !== '') currentRow.push(currentField.trim());
+            if (currentRow.some(field => field !== '')) {
+                result.push(currentRow);
+            }
+        }
+
+        // Convert to object format
+        if (result.length === 0) return [];
+        
+        const headers = result[0];
         const data = [];
 
-        for (let i = 1; i < lines.length; i++) {
-            if (lines[i].trim()) {
-                const values = this.parseCSVLine(lines[i]);
-                const row = {};
-                headers.forEach((header, index) => {
-                    row[header] = values[index] || '';
-                });
-                data.push(row);
-            }
+        for (let i = 1; i < result.length; i++) {
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header] = result[i][index] || '';
+            });
+            data.push(row);
         }
 
         return data;
     }
 
     parseCSVLine(line) {
+        // This method is now replaced by the improved parseCSV method above
+        // Keeping for compatibility but not used
         const result = [];
         let current = '';
         let inQuotes = false;
@@ -103,10 +471,12 @@ class PortfolioManager {
                 return null;
             }
 
+            const rawDescription = row.description?.trim() || '';
             return {
                 id: parseInt(row.id) || Date.now(),
                 title: row.title?.trim() || 'Untitled Project',
-                description: row.description?.trim() || '',
+                description: rawDescription,
+                descriptionHtml: this.convertMarkdownToHtml(rawDescription),
                 image: this.processImageUrl(row.image),
                 tags: this.processTags(row.tags),
                 detailImages: this.processDetailImages(row.detailImages),
@@ -180,16 +550,159 @@ class PortfolioManager {
             .filter(url => url !== '');
     }
 
+    convertMarkdownToHtml(markdownText) {
+        if (!markdownText || markdownText.trim() === '') {
+            return '';
+        }
+
+        // Clean and normalize the input
+        let text = markdownText
+            .replace(/\\n/g, '\n')  // Handle escaped newlines
+            .replace(/\r\n/g, '\n') // Handle Windows line endings
+            .replace(/\r/g, '\n')   // Handle Mac line endings
+            .trim();
+
+        // Split into blocks by double line breaks
+        const blocks = text.split(/\n\s*\n/);
+        const htmlBlocks = [];
+
+        for (let block of blocks) {
+            block = block.trim();
+            if (!block) continue;
+
+            const lines = block.split('\n').map(line => line.trim()).filter(line => line);
+            
+            // Process each line individually for markdown syntax
+            const processedLines = [];
+            
+            for (let line of lines) {
+                // Check for markdown headings (# ## ###)
+                if (line.match(/^#{1,6}\s+/)) {
+                    const level = line.match(/^#+/)[0].length;
+                    const headingText = line.replace(/^#+\s*/, '').trim();
+                    processedLines.push(`<h${Math.min(level, 6)}>${headingText}</h${Math.min(level, 6)}>`);
+                }
+                // Check for list items (- or *)
+                else if (line.match(/^[-*]\s+/)) {
+                    const listItem = line.replace(/^[-*]\s+/, '').trim();
+                    processedLines.push(`LIST_ITEM:${listItem}`);
+                }
+                // Regular text
+                else {
+                    processedLines.push(`TEXT:${line}`);
+                }
+            }
+
+            // Group consecutive list items and text lines
+            let i = 0;
+            while (i < processedLines.length) {
+                const currentLine = processedLines[i];
+                
+                if (currentLine.startsWith('LIST_ITEM:')) {
+                    // Collect consecutive list items
+                    const listItems = [];
+                    while (i < processedLines.length && processedLines[i].startsWith('LIST_ITEM:')) {
+                        listItems.push(processedLines[i].replace('LIST_ITEM:', ''));
+                        i++;
+                    }
+                    htmlBlocks.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+                }
+                else if (currentLine.startsWith('TEXT:')) {
+                    // Collect consecutive text lines into paragraphs
+                    const textLines = [];
+                    while (i < processedLines.length && processedLines[i].startsWith('TEXT:')) {
+                        textLines.push(processedLines[i].replace('TEXT:', ''));
+                        i++;
+                    }
+                    if (textLines.length > 0) {
+                        htmlBlocks.push(`<p>${textLines.join(' ')}</p>`);
+                    }
+                }
+                else {
+                    // Already formatted heading
+                    htmlBlocks.push(currentLine);
+                    i++;
+                }
+            }
+        }
+
+        return htmlBlocks.join('');
+    }
+
     processLongDescription(longDesc) {
         if (!longDesc || longDesc.trim() === '') {
             return '';
         }
 
-        // Convert Google Sheets line breaks and formatting
-        return longDesc
+        // Clean and normalize the input
+        let processed = longDesc
             .replace(/\\n/g, '\n')  // Handle escaped newlines
-            .replace(/\n\n/g, '\n\n') // Preserve paragraph breaks
+            .replace(/\r\n/g, '\n') // Handle Windows line endings
+            .replace(/\r/g, '\n')   // Handle Mac line endings
             .trim();
+
+        // Split into blocks by double line breaks
+        const blocks = processed.split(/\n\s*\n/);
+        const result = [];
+
+        for (let block of blocks) {
+            block = block.trim();
+            if (!block) continue;
+
+            const lines = block.split('\n');
+            
+            // Check if this block is a list (all lines start with - or *)
+            const isListBlock = lines.every(line => {
+                const trimmed = line.trim();
+                return trimmed === '' || trimmed.match(/^[-*]\s+/);
+            });
+
+            if (isListBlock) {
+                // Process as a list
+                const listItems = lines
+                    .map(line => line.trim())
+                    .filter(line => line.match(/^[-*]\s+/))
+                    .map(line => line.replace(/^[-*]\s+/, ''));
+                
+                if (listItems.length > 0) {
+                    result.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+                }
+            } else {
+                // Process as paragraph(s)
+                // Check if any lines in this block are list items
+                const paragraphLines = [];
+                const listItems = [];
+                
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line.match(/^[-*]\s+/)) {
+                        // If we have paragraph content, add it first
+                        if (paragraphLines.length > 0) {
+                            result.push(`<p>${paragraphLines.join(' ')}</p>`);
+                            paragraphLines.length = 0;
+                        }
+                        listItems.push(line.replace(/^[-*]\s+/, ''));
+                    } else if (line) {
+                        // If we have list items, add them first
+                        if (listItems.length > 0) {
+                            result.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+                            listItems.length = 0;
+                        }
+                        paragraphLines.push(line);
+                    }
+                }
+                
+                // Add remaining content
+                if (listItems.length > 0) {
+                    result.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+                }
+                if (paragraphLines.length > 0) {
+                    result.push(`<p>${paragraphLines.join(' ')}</p>`);
+                }
+            }
+        }
+
+        return result.join('');
     }
 
     getDefaultProjects() {
@@ -251,11 +764,29 @@ class PortfolioManager {
         card.className = 'project-card';
         card.addEventListener('click', () => this.openProjectModal(project));
 
+        // Extract first sentence or paragraph for card preview
+        const getCardDescription = (description) => {
+            if (!description) return '';
+            
+            // Remove markdown formatting and get first paragraph
+            const cleanText = description
+                .replace(/\n+/g, ' ')  // Replace newlines with spaces
+                .replace(/[-*]\s+/g, '') // Remove list markers
+                .trim();
+            
+            // Get first sentence or truncate at reasonable length
+            const firstSentence = cleanText.split('.')[0];
+            if (firstSentence.length > 150) {
+                return firstSentence.substring(0, 147) + '...';
+            }
+            return firstSentence + (cleanText.includes('.') ? '.' : '');
+        };
+
         card.innerHTML = `
             <img src="${project.image}" alt="${project.title}" class="project-image">
             <div class="project-info">
                 <h3>${project.title}</h3>
-                <p>${project.description}</p>
+                <p>${getCardDescription(project.description)}</p>
                 <div class="project-tags">
                     ${project.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
@@ -273,6 +804,16 @@ class PortfolioManager {
                 ).join('')}
             </div>` : '';
 
+        // Use the converted HTML description, fallback to longDescription, then plain description
+        let descriptionHTML = '';
+        if (project.descriptionHtml && project.descriptionHtml.trim() !== '') {
+            descriptionHTML = project.descriptionHtml;
+        } else if (project.longDescription && project.longDescription.trim() !== '') {
+            descriptionHTML = project.longDescription;
+        } else {
+            descriptionHTML = `<p>${project.description}</p>`;
+        }
+
         this.modalBody.innerHTML = `
             <div class="project-detail">
                 <img src="${project.image}" alt="${project.title}" class="project-detail-image">
@@ -281,10 +822,7 @@ class PortfolioManager {
                     ${project.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
                 <div class="project-detail-description">
-                    ${project.longDescription ? 
-                        project.longDescription.split('\n').map(para => `<p>${para}</p>`).join('') :
-                        `<p>${project.description}</p>`
-                    }
+                    ${descriptionHTML}
                 </div>
                 ${detailImagesHTML}
             </div>
@@ -365,5 +903,7 @@ class PortfolioManager {
 
 // Initialize the portfolio when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize content management first, then portfolio
+    new ContentManager();
     new PortfolioManager();
 });
