@@ -6,70 +6,87 @@
     <title>nominalco</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Preload the main font weights we use -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header class="header">
-        <nav class="nav">
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
             <div class="logo">
                 <h1><span class="logo-heavy">nominal</span><span class="logo-light">co</span></h1>
             </div>
-            <button class="hamburger" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <ul class="nav-links">
-                <li><a href="#work">Work</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <main>
-        <section class="hero">
-            <div class="hero-content">
-                <h2 class="hero-title">Multi-disciplinary art and design studio.</h2>
-                <p class="hero-subtitle">We design objects, interfaces, and ideas.</p>
+            <div class="loading-spinner">
+                <div class="spinner"></div>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <section id="work" class="work">
-            <div class="container">
-                <h2 class="section-title">Selected Work</h2>
-                <div id="projects-grid" class="projects-grid">
-                    <!-- Projects will be dynamically loaded here -->
+    <!-- Main Content (Initially Hidden) -->
+    <div id="main-content" class="main-content hidden">
+        <header class="header">
+            <nav class="nav">
+                <div class="logo">
+                    <h1><span class="logo-heavy">nominal</span><span class="logo-light">co</span></h1>
                 </div>
-            </div>
-        </section>
+                <button class="hamburger" aria-label="Toggle navigation">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-links">
+                    <li><a href="#work">Work</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
 
-        <section id="about" class="about">
-            <div class="container">
-                <div class="about-content">
-                    <h2 class="section-title">About nominalco</h2>
-                    <!-- Paragraphs will be dynamically generated based on Google Sheet content -->
+        <main>
+            <section class="hero">
+                <div class="hero-content">
+                    <h2 class="hero-title"></h2>
+                    <p class="hero-subtitle"></p>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section id="contact" class="contact">
-            <div class="container">
-                <h2 class="section-title">Contact</h2>
-                <div class="contact-links">
-                    <a href="mailto:hello@nominalco.com" class="contact-link">hello@nominalco.com</a>
+            <section id="work" class="work">
+                <div class="container">
+                    <h2 class="section-title"></h2>
+                    <div id="projects-grid" class="projects-grid">
+                        <!-- Projects will be dynamically loaded here -->
+                    </div>
                 </div>
-            </div>
-        </section>
-    </main>
+            </section>
 
-    <!-- Project Modal -->
-    <div id="project-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="modal-body">
-                <!-- Project details will be loaded here -->
+            <section id="about" class="about">
+                <div class="container">
+                    <div class="about-content">
+                        <h2 class="section-title"></h2>
+                        <!-- Paragraphs will be dynamically generated based on Google Sheet content -->
+                    </div>
+                </div>
+            </section>
+
+            <section id="contact" class="contact">
+                <div class="container">
+                    <h2 class="section-title"></h2>
+                    <div class="contact-links">
+                        <a href="#" class="contact-link"></a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Project Modal -->
+        <div id="project-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div id="modal-body">
+                    <!-- Project details will be loaded here -->
+                </div>
             </div>
         </div>
     </div>

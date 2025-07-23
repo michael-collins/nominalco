@@ -1,8 +1,84 @@
+// Application Manager - coordinates loading and initialization
+class AppManager {
+    constructor() {
+        this.contentManager = null;
+        this.portfolioManager = null;
+        this.isContentLoaded = false;
+        this.isProjectsLoaded = false;
+    }
+
+    async init() {
+        try {
+            // Show loading screen
+            this.showLoadingScreen();
+
+            // Initialize content and portfolio managers in parallel
+            const [contentManager, portfolioManager] = await Promise.all([
+                this.initContentManager(),
+                this.initPortfolioManager()
+            ]);
+
+            this.contentManager = contentManager;
+            this.portfolioManager = portfolioManager;
+
+            // Hide loading screen and show main content
+            setTimeout(() => {
+                this.hideLoadingScreen();
+                this.showMainContent();
+            }, 500); // Small delay for smooth transition
+
+        } catch (error) {
+            console.error('Error initializing application:', error);
+            // Still hide loading screen even if there's an error
+            setTimeout(() => {
+                this.hideLoadingScreen();
+                this.showMainContent();
+            }, 1000);
+        }
+    }
+
+    async initContentManager() {
+        const contentManager = new ContentManager();
+        await contentManager.init();
+        return contentManager;
+    }
+
+    async initPortfolioManager() {
+        const portfolioManager = new PortfolioManager();
+        await portfolioManager.init();
+        return portfolioManager;
+    }
+
+    showLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const mainContent = document.getElementById('main-content');
+        
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+        if (mainContent) mainContent.classList.add('hidden');
+    }
+
+    hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.classList.add('fade-out');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+    }
+
+    showMainContent() {
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.classList.remove('hidden');
+        }
+    }
+}
+
 // Content management from Google Sheets
 class ContentManager {
     constructor() {
         this.content = {};
-        this.init();
     }
 
     async init() {
@@ -149,8 +225,6 @@ class ContentManager {
     getDefaultContent() {
         return {
             'site.title': 'nominalco',
-            'site.logoHeavy': 'nominal',
-            'site.logoLight': 'co',
             'hero.title': 'Multi-disciplinary art and design studio.',
             'hero.subtitle': 'We design objects, interfaces, and ideas.',
             'work.title': 'Selected Work',
@@ -166,14 +240,6 @@ class ContentManager {
         // Apply basic content mappings
         const mappings = {
             'site.title': () => document.title = this.content['site.title'] || 'nominalco',
-            'site.logoHeavy': () => {
-                const elem = document.querySelector('.logo-heavy');
-                if (elem) elem.textContent = this.content['site.logoHeavy'] || 'nominal';
-            },
-            'site.logoLight': () => {
-                const elem = document.querySelector('.logo-light');
-                if (elem) elem.textContent = this.content['site.logoLight'] || 'co';
-            },
             'hero.title': () => {
                 const elem = document.querySelector('.hero-title');
                 if (elem) elem.textContent = this.content['hero.title'] || 'Multi-disciplinary art and design studio.';
@@ -268,19 +334,24 @@ class ContentManager {
 class PortfolioManager {
     constructor() {
         this.projects = [];
-        this.modal = document.getElementById('project-modal');
-        this.modalBody = document.getElementById('modal-body');
-        this.closeBtn = document.querySelector('.close');
-        
-        this.init();
+        this.modal = null;
+        this.modalBody = null;
+        this.closeBtn = null;
     }
 
     async init() {
         await this.loadProjects();
+        this.setupDOM();
         this.renderProjects();
         this.setupEventListeners();
         this.setupSmoothScrolling();
         this.setupMobileMenu();
+    }
+
+    setupDOM() {
+        this.modal = document.getElementById('project-modal');
+        this.modalBody = document.getElementById('modal-body');
+        this.closeBtn = document.querySelector('.close');
     }
 
     async loadProjects() {
@@ -901,9 +972,8 @@ class PortfolioManager {
     }
 }
 
-// Initialize the portfolio when the DOM is loaded
+// Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize content management first, then portfolio
-    new ContentManager();
-    new PortfolioManager();
+    const app = new AppManager();
+    app.init();
 });
