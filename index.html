@@ -80,12 +80,109 @@
             </section>
         </main>
 
-        <!-- Project Modal -->
-        <div id="project-modal" class="modal">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <div id="modal-body">
-                    <!-- Project details will be loaded here -->
+        <!-- Enhanced Case Study Modal -->
+        <div id="project-modal" class="case-study-modal">
+            <div class="case-study-container">
+                <!-- Navigation Header -->
+                <nav class="case-study-nav">
+                    <button class="nav-close" aria-label="Close case study">&times;</button>
+                    <div class="nav-progress">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <div class="nav-info">
+                        <span class="project-counter">01 / 03</span>
+                        <div class="nav-arrows">
+                            <button class="nav-prev" aria-label="Previous project">←</button>
+                            <button class="nav-next" aria-label="Next project">→</button>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- Case Study Content -->
+                <div class="case-study-content">
+                    <!-- Hero Section -->
+                    <section class="case-study-hero">
+                        <div class="hero-media">
+                            <img class="hero-image" src="" alt="">
+                            <div class="hero-overlay"></div>
+                        </div>
+                        <div class="hero-content">
+                            <div class="hero-meta">
+                                <span class="project-category"></span>
+                                <span class="project-year"></span>
+                            </div>
+                            <h1 class="hero-title"></h1>
+                            <p class="hero-subtitle"></p>
+                            <div class="hero-tags"></div>
+                        </div>
+                        <div class="scroll-indicator">
+                            <span>Scroll to explore</span>
+                            <div class="scroll-line"></div>
+                        </div>
+                    </section>
+
+                    <!-- Project Overview -->
+                    <section class="case-study-overview">
+                        <div class="overview-grid">
+                            <div class="overview-details">
+                                <h2>Project Overview</h2>
+                                <div class="project-description"></div>
+                            </div>
+                            <div class="overview-sidebar">
+                                <div class="overview-client">
+                                    <h3>Client</h3>
+                                    <p class="client-text">Client information will be populated here</p>
+                                </div>
+                                <div class="overview-challenge">
+                                    <h3>The Challenge</h3>
+                                    <p class="challenge-text">Creating an innovative solution that balances user needs with technical constraints while maintaining design excellence.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Image Gallery -->
+                    <section class="case-study-gallery">
+                        <h2>Visual Journey</h2>
+                        <div class="gallery-grid" id="project-gallery">
+                            <!-- Images will be dynamically loaded -->
+                        </div>
+                    </section>
+
+                    <!-- Results Section -->
+                    <section class="case-study-results">
+                        <h2>Results & Impact</h2>
+                        <div class="results-grid">
+                            <div class="result-metric">
+                                <span class="metric-number">150%</span>
+                                <span class="metric-label">User Engagement</span>
+                            </div>
+                            <div class="result-metric">
+                                <span class="metric-number">40%</span>
+                                <span class="metric-label">Time Saved</span>
+                            </div>
+                            <div class="result-metric">
+                                <span class="metric-number">95%</span>
+                                <span class="metric-label">Client Satisfaction</span>
+                            </div>
+                        </div>
+                        <div class="results-summary">
+                            <p>This project successfully transformed the user experience and established new industry standards for similar applications.</p>
+                        </div>
+                    </section>
+
+                    <!-- Next Project -->
+                    <section class="case-study-next">
+                        <h3>Next Project</h3>
+                        <div class="next-project-card">
+                            <img class="next-project-image" src="" alt="">
+                            <div class="next-project-info">
+                                <h4 class="next-project-title"></h4>
+                                <p class="next-project-description"></p>
+                                <button class="next-project-btn">View Project →</button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>

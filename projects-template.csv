@@ -1,0 +1,26 @@
+yearid,title,description,image,tags,detailImages,longDescription,year,client,duration,teamSize,role,challenge,solution,results,metrics,category,featured,status
+1,"Modular Audio Interface","Hardware-software system for professional audio production with modular connectivity.","https://via.placeholder.com/600x400/2c2c2c/ffffff?text=Modular+Audio+Interface","Hardware, Audio, Interface","https://via.placeholder.com/800x600/2c2c2c/ffffff?text=Interface+Overview, https://via.placeholder.com/800x600/3c3c3c/ffffff?text=Module+System","Development of a modular audio interface system that bridges professional studio equipment with modern digital workflows. The project required extensive research into signal processing, electromagnetic compatibility, and user interface design.
+
+## Technical Specifications:
+- 24-bit/192kHz conversion
+- Modular I/O expansion  
+- Software-controlled routing matrix
+- USB-C and Thunderbolt connectivity
+- Field-replaceable components","2024","Audio Professionals Ltd.","8 months","5 engineers","Lead Hardware Designer","Designing a modular system that maintains signal integrity while allowing flexible configuration for different studio setups.","Created a proprietary connector system with intelligent signal routing and software-controlled matrix switching.","Successfully launched product with 40% faster setup times and 99.99% signal reliability across all modules.","40% Faster Setup, 99.99% Signal Reliability, 15 Module Types","Hardware Design","true","completed"
+2,"Inventory Management Platform","Digital tool for tracking and optimizing physical product inventory across multiple locations.","https://via.placeholder.com/600x400/f8f9fa/495057?text=Inventory+Platform","Software, Logistics, Analytics","https://via.placeholder.com/800x600/f8f9fa/495057?text=Dashboard+View, https://via.placeholder.com/800x600/e9ecef/495057?text=Analytics+Panel","Comprehensive platform for managing physical inventory across distributed locations. System integrates barcode scanning, predictive analytics, and automated reordering to minimize stockouts while optimizing storage costs.
+
+## Core Functionality:
+- Real-time inventory tracking
+- Predictive demand modeling
+- Automated procurement workflows
+- Multi-location synchronization
+- Integration with existing ERP systems","2023","Global Retail Chain","12 months","8 developers","UX Lead & Product Designer","Creating an intuitive interface for complex inventory operations while ensuring real-time data accuracy across 50+ locations.","Developed a progressive web app with offline capabilities and smart notification system to guide users through optimal inventory decisions.","Reduced inventory costs by 25% and improved stock availability by 30% across all locations.","25% Cost Reduction, 30% Stock Availability, 50+ Locations Managed","Software Design","true","completed"
+3,"Sustainable Lighting System","Environmentally conscious lighting fixtures with intelligent control and minimal material waste.","https://via.placeholder.com/600x400/e8f5e8/2e7d32?text=Lighting+System","Lighting, Sustainability, IoT","https://via.placeholder.com/800x600/e8f5e8/2e7d32?text=Fixture+Design, https://via.placeholder.com/800x600/c8e6c9/2e7d32?text=Control+Interface","Design and engineering of a modular lighting system prioritizing material efficiency and longevity. Each fixture incorporates recyclable components, field-replaceable LED modules, and intelligent dimming controls.
+
+## Sustainability Features:
+- 95% recyclable materials
+- 50,000+ hour LED lifespan
+- Daylight harvesting sensors
+- Occupancy-based dimming
+- Minimal packaging design
+- Local manufacturing capability","2024","Green Architecture Firm","6 months","4 designers","Sustainable Design Lead","Balancing environmental impact with performance requirements while maintaining cost-effectiveness for commercial applications.","Engineered a modular system using bio-based materials with intelligent controls that adapt to natural light patterns and occupancy.","Achieved 60% energy reduction compared to traditional systems while maintaining superior light quality and user satisfaction.","60% Energy Reduction, 95% Recyclable Materials, 50,000+ Hour LED Lifespan","Product Design","false","completed"

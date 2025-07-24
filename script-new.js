@@ -326,28 +326,7 @@ class CaseStudyModal {
     
     openCaseStudy(project, projects) {
         this.projects = projects;
-        console.log('Opening project:', project.title, 'ID:', project.id);
-        console.log('All project IDs:', projects.map(p => ({ title: p.title, id: p.id })));
-        
-        // Find by ID first, then by title, then by index as fallback
         this.currentProjectIndex = projects.findIndex(p => p.id === project.id);
-        
-        // If ID match fails, try title match
-        if (this.currentProjectIndex === -1) {
-            this.currentProjectIndex = projects.findIndex(p => p.title === project.title);
-        }
-        
-        // If still not found, find by looking for the same project object reference
-        if (this.currentProjectIndex === -1) {
-            this.currentProjectIndex = projects.findIndex(p => p === project);
-        }
-        
-        // Ultimate fallback - use index 0
-        if (this.currentProjectIndex === -1) {
-            this.currentProjectIndex = 0;
-        }
-        
-        console.log('Final project index:', this.currentProjectIndex, 'for project:', project.title);
         
         this.populateContent(project);
         this.modal.style.display = 'block';
@@ -383,11 +362,11 @@ class CaseStudyModal {
             const firstSentence = description.split('.')[0];
             heroSubtitle.textContent = firstSentence + (description.includes('.') ? '.' : '');
         }
-        if (projectCategory) {
-            projectCategory.textContent = project.category || (project.tags && project.tags.length > 0 ? project.tags[0] : 'Design');
+        if (projectCategory && project.tags && project.tags.length > 0) {
+            projectCategory.textContent = project.tags[0];
         }
         if (projectYear) {
-            projectYear.textContent = project.year || new Date().getFullYear();
+            projectYear.textContent = new Date().getFullYear(); // Default to current year
         }
         
         // Populate tags
@@ -409,15 +388,6 @@ class CaseStudyModal {
                 projectDescription.innerHTML = `<p>${project.description}</p>`;
             }
         }
-
-        // Populate client section - only show if client exists
-        this.populateClient(project);
-        
-        // Populate challenge section - only show if challenge exists
-        this.populateChallenge(project);
-
-        // Populate results section with dynamic metrics
-        this.populateResults(project);
         
         // Populate gallery
         this.populateGallery(project.detailImages || [project.image]);
@@ -428,79 +398,8 @@ class CaseStudyModal {
         // Update navigation
         this.updateNavigation();
     }
-
-    populateClient(project) {
-        const clientContainer = this.modal.querySelector('.overview-client');
-        const clientText = this.modal.querySelector('.client-text');
-        
-        if (project.client && clientText) {
-            clientText.textContent = project.client;
-            if (clientContainer) clientContainer.style.display = 'block';
-        } else {
-            // Hide entire client container if no client data
-            if (clientContainer) clientContainer.style.display = 'none';
-        }
-    }
-
-    populateChallenge(project) {
-        const challengeContainer = this.modal.querySelector('.overview-challenge');
-        const challengeText = this.modal.querySelector('.challenge-text');
-        
-        if (project.challenge && challengeText) {
-            challengeText.textContent = project.challenge;
-            if (challengeContainer) challengeContainer.style.display = 'block';
-        } else {
-            // Hide entire challenge container if no challenge data
-            if (challengeContainer) challengeContainer.style.display = 'none';
-        }
-    }
-
-    populateResults(project) {
-        const resultsSection = this.modal.querySelector('.case-study-results');
-        const resultsGrid = this.modal.querySelector('.results-grid');
-        const resultsSummary = this.modal.querySelector('.results-summary p');
-        
-        // Check if we have results data
-        const hasResults = project.results || (project.metrics && project.metrics.length > 0);
-        
-        if (!hasResults) {
-            // Hide entire results section if no data
-            if (resultsSection) resultsSection.style.display = 'none';
-            return;
-        }
-        
-        // Show results section
-        if (resultsSection) resultsSection.style.display = 'block';
-        
-        // Handle metrics if available
-        if (project.metrics && project.metrics.length > 0 && resultsGrid) {
-            resultsGrid.innerHTML = '';
-            project.metrics.forEach(metric => {
-                const metricDiv = document.createElement('div');
-                metricDiv.className = 'result-metric';
-                metricDiv.innerHTML = `
-                    <span class="metric-number">${metric.value}</span>
-                    <span class="metric-label">${metric.label}</span>
-                `;
-                resultsGrid.appendChild(metricDiv);
-            });
-            resultsGrid.style.display = 'grid';
-        } else if (resultsGrid) {
-            // Hide metrics grid if no metrics
-            resultsGrid.style.display = 'none';
-        }
-        
-        // Handle results summary
-        if (project.results && resultsSummary) {
-            resultsSummary.textContent = project.results;
-            resultsSummary.parentElement.style.display = 'block';
-        } else if (resultsSummary && resultsSummary.parentElement) {
-            resultsSummary.parentElement.style.display = 'none';
-        }
-    }
     
     populateGallery(images) {
-        const gallerySection = this.modal.querySelector('.case-study-gallery');
         const gallery = this.modal.querySelector('#project-gallery');
         if (!gallery) return;
         
@@ -509,14 +408,10 @@ class CaseStudyModal {
         // Filter out empty or invalid images
         const validImages = images.filter(img => img && img.trim() !== '');
         
-        // Only show gallery if we have more than just the main project image
-        if (validImages.length <= 1) {
-            if (gallerySection) gallerySection.style.display = 'none';
+        if (validImages.length === 0) {
+            gallery.innerHTML = '<p>No additional images available for this project.</p>';
             return;
         }
-        
-        // Show gallery section
-        if (gallerySection) gallerySection.style.display = 'block';
         
         validImages.forEach((image, index) => {
             const galleryItem = document.createElement('div');
@@ -821,28 +716,14 @@ class PortfolioManager {
 
             const rawDescription = row.c[2]?.v?.trim() || '';
             const project = {
-                id: (i + 1), // Use row index + 1 for guaranteed unique ID
-                originalId: parseInt(row.c[0]?.v) || (i + 1), // Keep original ID for reference
+                id: parseInt(row.c[0]?.v) || (i + 1),
                 title: row.c[1]?.v?.trim() || 'Untitled Project',
                 description: rawDescription,
                 descriptionHtml: this.convertMarkdownToHtml(rawDescription),
                 image: this.processImageUrl(row.c[3]?.v),
                 tags: this.processTags(row.c[4]?.v),
                 detailImages: this.processDetailImages(row.c[5]?.v),
-                longDescription: this.processLongDescription(row.c[6]?.v),
-                // New dynamic fields for enhanced case studies
-                year: row.c[7]?.v?.trim() || new Date().getFullYear().toString(),
-                client: row.c[8]?.v?.trim() || '',
-                duration: row.c[9]?.v?.trim() || '',
-                teamSize: row.c[10]?.v?.trim() || '',
-                role: row.c[11]?.v?.trim() || '',
-                challenge: row.c[12]?.v?.trim() || '',
-                solution: row.c[13]?.v?.trim() || '',
-                results: row.c[14]?.v?.trim() || '',
-                metrics: this.processMetrics(row.c[15]?.v),
-                category: row.c[16]?.v?.trim() || (row.c[4]?.v?.split(',')[0]?.trim() || 'Design'),
-                featured: row.c[17]?.v?.toLowerCase() === 'true' || false,
-                status: row.c[18]?.v?.trim() || 'completed'
+                longDescription: this.processLongDescription(row.c[6]?.v)
             };
 
             projects.push(project);
@@ -924,7 +805,7 @@ class PortfolioManager {
     }
 
     transformSheetData(sheetData) {
-        return sheetData.map((row, index) => {
+        return sheetData.map(row => {
             // Handle empty rows
             if (!row.title || row.title.trim() === '') {
                 return null;
@@ -932,28 +813,14 @@ class PortfolioManager {
 
             const rawDescription = row.description?.trim() || '';
             return {
-                id: (index + 1), // Use array index + 1 for guaranteed unique ID
-                originalId: parseInt(row.yearid) || parseInt(row.id) || (index + 1), // Keep original ID for reference
+                id: parseInt(row.id) || Date.now(),
                 title: row.title?.trim() || 'Untitled Project',
                 description: rawDescription,
                 descriptionHtml: this.convertMarkdownToHtml(rawDescription),
                 image: this.processImageUrl(row.image),
                 tags: this.processTags(row.tags),
                 detailImages: this.processDetailImages(row.detailImages),
-                longDescription: this.processLongDescription(row.longDescription),
-                // New dynamic fields
-                year: row.year?.trim() || new Date().getFullYear().toString(),
-                client: row.client?.trim() || '',
-                duration: row.duration?.trim() || '',
-                teamSize: row.teamSize?.trim() || '',
-                role: row.role?.trim() || '',
-                challenge: row.challenge?.trim() || '',
-                solution: row.solution?.trim() || '',
-                results: row.results?.trim() || '',
-                metrics: this.processMetrics(row.metrics),
-                category: row.category?.trim() || (row.tags?.split(',')[0]?.trim() || 'Design'),
-                featured: row.featured?.toLowerCase() === 'true' || false,
-                status: row.status?.trim() || 'completed'
+                longDescription: this.processLongDescription(row.longDescription)
             };
         }).filter(project => project !== null); // Remove empty rows
     }
@@ -1021,25 +888,6 @@ class PortfolioManager {
         return detailImagesString.split(',')
             .map(url => this.processImageUrl(url.trim()))
             .filter(url => url !== '');
-    }
-
-    processMetrics(metricsString) {
-        if (!metricsString || metricsString.trim() === '') {
-            return [];
-        }
-
-        // Expected format: "150% User Engagement, 40% Time Saved, 95% Client Satisfaction"
-        return metricsString.split(',')
-            .map(metric => {
-                const parts = metric.trim().split(' ');
-                if (parts.length >= 2) {
-                    const value = parts[0];
-                    const label = parts.slice(1).join(' ');
-                    return { value, label };
-                }
-                return null;
-            })
-            .filter(metric => metric !== null);
     }
 
     convertMarkdownToHtml(markdownText) {
@@ -1142,23 +990,7 @@ class PortfolioManager {
                     "https://via.placeholder.com/800x600/3c3c3c/ffffff?text=Module+System",
                     "https://via.placeholder.com/800x600/4c4c4c/ffffff?text=Software+Control"
                 ],
-                longDescription: "Development of a modular audio interface system that bridges professional studio equipment with modern digital workflows. The project required extensive research into signal processing, electromagnetic compatibility, and user interface design.\n\nTechnical specifications:\n• 24-bit/192kHz conversion\n• Modular I/O expansion\n• Software-controlled routing matrix\n• USB-C and Thunderbolt connectivity\n• Field-replaceable components",
-                year: "2024",
-                client: "Audio Professionals Ltd.",
-                duration: "8 months",
-                teamSize: "5 engineers",
-                role: "Lead Hardware Designer",
-                challenge: "Designing a modular system that maintains signal integrity while allowing flexible configuration for different studio setups.",
-                solution: "Created a proprietary connector system with intelligent signal routing and software-controlled matrix switching.",
-                results: "Successfully launched product with 40% faster setup times and 99.99% signal reliability across all modules.",
-                metrics: [
-                    { value: "40%", label: "Faster Setup" },
-                    { value: "99.99%", label: "Signal Reliability" },
-                    { value: "15", label: "Module Types" }
-                ],
-                category: "Hardware Design",
-                featured: true,
-                status: "completed"
+                longDescription: "Development of a modular audio interface system that bridges professional studio equipment with modern digital workflows. The project required extensive research into signal processing, electromagnetic compatibility, and user interface design.\n\nTechnical specifications:\n• 24-bit/192kHz conversion\n• Modular I/O expansion\n• Software-controlled routing matrix\n• USB-C and Thunderbolt connectivity\n• Field-replaceable components"
             },
             {
                 id: 2,
@@ -1171,23 +1003,7 @@ class PortfolioManager {
                     "https://via.placeholder.com/800x600/e9ecef/495057?text=Analytics+Panel",
                     "https://via.placeholder.com/800x600/dee2e6/495057?text=Mobile+Interface"
                 ],
-                longDescription: "Comprehensive platform for managing physical inventory across distributed locations. System integrates barcode scanning, predictive analytics, and automated reordering to minimize stockouts while optimizing storage costs.\n\nCore functionality:\n• Real-time inventory tracking\n• Predictive demand modeling\n• Automated procurement workflows\n• Multi-location synchronization\n• Integration with existing ERP systems",
-                year: "2023",
-                client: "Global Retail Chain",
-                duration: "12 months",
-                teamSize: "8 developers",
-                role: "UX Lead & Product Designer",
-                challenge: "Creating an intuitive interface for complex inventory operations while ensuring real-time data accuracy across 50+ locations.",
-                solution: "Developed a progressive web app with offline capabilities and smart notification system to guide users through optimal inventory decisions.",
-                results: "Reduced inventory costs by 25% and improved stock availability by 30% across all locations.",
-                metrics: [
-                    { value: "25%", label: "Cost Reduction" },
-                    { value: "30%", label: "Stock Availability" },
-                    { value: "50+", label: "Locations Managed" }
-                ],
-                category: "Software Design",
-                featured: true,
-                status: "completed"
+                longDescription: "Comprehensive platform for managing physical inventory across distributed locations. System integrates barcode scanning, predictive analytics, and automated reordering to minimize stockouts while optimizing storage costs.\n\nCore functionality:\n• Real-time inventory tracking\n• Predictive demand modeling\n• Automated procurement workflows\n• Multi-location synchronization\n• Integration with existing ERP systems"
             },
             {
                 id: 3,
@@ -1200,23 +1016,7 @@ class PortfolioManager {
                     "https://via.placeholder.com/800x600/c8e6c9/2e7d32?text=Control+Interface",
                     "https://via.placeholder.com/800x600/a5d6a7/2e7d32?text=Installation"
                 ],
-                longDescription: "Design and engineering of a modular lighting system prioritizing material efficiency and longevity. Each fixture incorporates recyclable components, field-replaceable LED modules, and intelligent dimming controls.\n\nSustainability features:\n• 95% recyclable materials\n• 50,000+ hour LED lifespan\n• Daylight harvesting sensors\n• Occupancy-based dimming\n• Minimal packaging design\n• Local manufacturing capability",
-                year: "2024",
-                client: "Green Architecture Firm",
-                duration: "6 months",
-                teamSize: "4 designers",
-                role: "Sustainable Design Lead",
-                challenge: "Balancing environmental impact with performance requirements while maintaining cost-effectiveness for commercial applications.",
-                solution: "Engineered a modular system using bio-based materials with intelligent controls that adapt to natural light patterns and occupancy.",
-                results: "Achieved 60% energy reduction compared to traditional systems while maintaining superior light quality and user satisfaction.",
-                metrics: [
-                    { value: "60%", label: "Energy Reduction" },
-                    { value: "95%", label: "Recyclable Materials" },
-                    { value: "50,000+", label: "Hour LED Lifespan" }
-                ],
-                category: "Product Design",
-                featured: false,
-                status: "completed"
+                longDescription: "Design and engineering of a modular lighting system prioritizing material efficiency and longevity. Each fixture incorporates recyclable components, field-replaceable LED modules, and intelligent dimming controls.\n\nSustainability features:\n• 95% recyclable materials\n• 50,000+ hour LED lifespan\n• Daylight harvesting sensors\n• Occupancy-based dimming\n• Minimal packaging design\n• Local manufacturing capability"
             }
         ];
     }
@@ -1256,13 +1056,11 @@ class PortfolioManager {
 
         card.innerHTML = `
             <img src="${project.image}" alt="${project.title}" class="project-image">
-            <div class="project-overlay">
-                <div class="project-info">
-                    <h3>${project.title}</h3>
-                    <p>${getCardDescription(project.description)}</p>
-                    <div class="project-tags">
-                        ${project.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
+            <div class="project-info">
+                <h3>${project.title}</h3>
+                <p>${getCardDescription(project.description)}</p>
+                <div class="project-tags">
+                    ${project.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
                 </div>
             </div>
         `;
