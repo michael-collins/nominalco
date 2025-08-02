@@ -413,6 +413,9 @@ class CaseStudyModal {
         // Populate client section - only show if client exists
         this.populateClient(project);
         
+        // Populate Shopify button section - only show if button exists
+        this.populateShopifyButton(project);
+        
         // Populate challenge section - only show if challenge exists
         this.populateChallenge(project);
 
@@ -440,6 +443,125 @@ class CaseStudyModal {
             // Hide entire client container if no client data
             if (clientContainer) clientContainer.style.display = 'none';
         }
+    }
+
+    populateShopifyButton(project) {
+        const shopifyContainer = this.modal.querySelector('.overview-shopify');
+        
+        if (project.shopifyButton && project.shopifyButton.trim() !== '') {
+            if (shopifyContainer) {
+                // Create a unique container ID for this Shopify button
+                const containerId = `shopify-container-${Date.now()}`;
+                
+                shopifyContainer.innerHTML = `
+                    <h3>Purchase</h3>
+                    <div class="shopify-button-container" id="${containerId}">
+                        Loading...
+                    </div>
+                `;
+                shopifyContainer.style.display = 'block';
+                
+                // Inject and execute the Shopify button code
+                this.injectShopifyButton(project.shopifyButton, containerId);
+            }
+        } else {
+            // Hide entire Shopify container if no button data
+            if (shopifyContainer) shopifyContainer.style.display = 'none';
+        }
+    }
+
+    injectShopifyButton(buttonHTML, containerId) {
+        console.log('🛒 Injecting Shopify button...', containerId);
+        
+        // Parse the HTML to extract the script and div elements
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = buttonHTML;
+        
+        const scriptElement = tempDiv.querySelector('script');
+        const divElement = tempDiv.querySelector('div[id*="product-component"]');
+        
+        if (!scriptElement || !divElement) {
+            console.warn('Invalid Shopify button HTML - missing script or div element');
+            document.getElementById(containerId).innerHTML = '<p>Invalid button configuration</p>';
+            return;
+        }
+        
+        console.log('✅ Found Shopify elements:', {
+            script: !!scriptElement,
+            div: divElement.id,
+            containerId: containerId
+        });
+        
+        // Insert the Shopify div into our container
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        // Clone the div and update its ID to avoid conflicts
+        const clonedDiv = divElement.cloneNode(true);
+        const originalId = clonedDiv.id;
+        const newId = `${originalId}-${Date.now()}`;
+        clonedDiv.id = newId;
+        
+        container.appendChild(clonedDiv);
+        console.log(`📦 Shopify div added with ID: ${newId}`);
+        
+        // Execute the Shopify script with updated ID
+        try {
+            // Get the script content and update the element ID reference
+            let scriptContent = scriptElement.textContent || scriptElement.innerText;
+            scriptContent = scriptContent.replace(
+                new RegExp(originalId, 'g'), 
+                newId
+            );
+            
+            // Create a new script element and execute it
+            const newScript = document.createElement('script');
+            newScript.type = 'text/javascript';
+            newScript.textContent = scriptContent;
+            
+            // Add error handling to the script
+            newScript.onerror = function(error) {
+                console.error('❌ Shopify script error:', error);
+                container.innerHTML = '<p>Error loading purchase button</p>';
+            };
+            
+            // Append to document head to execute
+            document.head.appendChild(newScript);
+            
+            console.log('✅ Shopify button script injected successfully');
+            
+            // Add a timeout to check if the button loaded
+            setTimeout(() => {
+                const buttonElement = container.querySelector('button, .shopify-buy__btn');
+                if (buttonElement) {
+                    console.log('✅ Shopify button rendered successfully');
+                } else {
+                    console.warn('⚠️ Shopify button may not have rendered - check network connectivity');
+                    // Don't replace content, let Shopify handle loading states
+                }
+            }, 3000);
+            
+        } catch (error) {
+            console.error('❌ Error injecting Shopify button:', error);
+            container.innerHTML = '<p>Error loading purchase button</p>';
+        }
+    }
+
+    sanitizeShopifyButton(buttonHTML) {
+        // This method is now used by injectShopifyButton for validation
+        // Basic validation to ensure we have the required Shopify elements
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = buttonHTML;
+        
+        const hasScript = tempDiv.querySelector('script') !== null;
+        const hasDiv = tempDiv.querySelector('div[id*="product-component"]') !== null;
+        
+        if (!hasScript || !hasDiv) {
+            console.warn('⚠️ Shopify button HTML is missing required elements');
+            return false;
+        }
+        
+        return true;
     }
 
     populateChallenge(project) {
@@ -842,7 +964,8 @@ class PortfolioManager {
                 metrics: this.processMetrics(row.c[15]?.v),
                 category: row.c[16]?.v?.trim() || (row.c[4]?.v?.split(',')[0]?.trim() || 'Design'),
                 featured: row.c[17]?.v?.toLowerCase() === 'true' || false,
-                status: row.c[18]?.v?.trim() || 'completed'
+                status: row.c[18]?.v?.trim() || 'completed',
+                shopifyButton: row.c[19]?.v?.trim() || ''
             };
 
             projects.push(project);
@@ -953,7 +1076,8 @@ class PortfolioManager {
                 metrics: this.processMetrics(row.metrics),
                 category: row.category?.trim() || (row.tags?.split(',')[0]?.trim() || 'Design'),
                 featured: row.featured?.toLowerCase() === 'true' || false,
-                status: row.status?.trim() || 'completed'
+                status: row.status?.trim() || 'completed',
+                shopifyButton: row.shopifyButton?.trim() || ''
             };
         }).filter(project => project !== null); // Remove empty rows
     }
@@ -1158,7 +1282,102 @@ class PortfolioManager {
                 ],
                 category: "Hardware Design",
                 featured: true,
-                status: "completed"
+                status: "completed",
+                shopifyButton: `<div id='product-component-1754098536272'></div>
+<script type="text/javascript">
+/*<![CDATA[*/
+(function () {
+  var scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+  if (window.ShopifyBuy) {
+    if (window.ShopifyBuy.UI) {
+      ShopifyBuyInit();
+    } else {
+      loadScript();
+    }
+  } else {
+    loadScript();
+  }
+  function loadScript() {
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = scriptURL;
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+    script.onload = ShopifyBuyInit;
+  }
+  function ShopifyBuyInit() {
+    var client = ShopifyBuy.buildClient({
+      domain: 'vgmt5b-hv.myshopify.com',
+      storefrontAccessToken: '50e50d8f740c890c352c5362ed921d10',
+    });
+    ShopifyBuy.UI.onReady(client).then(function (ui) {
+      ui.createComponent('product', {
+        id: '7649078247475',
+        node: document.getElementById('product-component-1754098536272'),
+        moneyFormat: '%24%7B%7Bamount%7D%7D',
+        options: {
+  "product": {
+    "styles": {
+      "product": {
+        "@media (min-width: 601px)": {
+          "max-width": "calc(25% - 20px)",
+          "margin-left": "20px",
+          "margin-bottom": "50px"
+        }
+      }
+    },
+    "contents": {
+      "img": false,
+      "title": false,
+      "price": false
+    },
+    "text": {
+      "button": "Add to cart"
+    }
+  },
+  "productSet": {
+    "styles": {
+      "products": {
+        "@media (min-width: 601px)": {
+          "margin-left": "-20px"
+        }
+      }
+    }
+  },
+  "modalProduct": {
+    "contents": {
+      "img": false,
+      "imgWithCarousel": true,
+      "button": false,
+      "buttonWithQuantity": true
+    },
+    "styles": {
+      "product": {
+        "@media (min-width: 601px)": {
+          "max-width": "100%",
+          "margin-left": "0px",
+          "margin-bottom": "0px"
+        }
+      }
+    },
+    "text": {
+      "button": "Add to cart"
+    }
+  },
+  "option": {},
+  "cart": {
+    "text": {
+      "total": "Subtotal",
+      "button": "Checkout"
+    }
+  },
+  "toggle": {}
+},
+      });
+    });
+  }
+})();
+/*]]>*/
+</script>`
             },
             {
                 id: 2,
@@ -1187,7 +1406,8 @@ class PortfolioManager {
                 ],
                 category: "Software Design",
                 featured: true,
-                status: "completed"
+                status: "completed",
+                shopifyButton: ""
             },
             {
                 id: 3,
@@ -1216,7 +1436,8 @@ class PortfolioManager {
                 ],
                 category: "Product Design",
                 featured: false,
-                status: "completed"
+                status: "completed",
+                shopifyButton: '<div style="text-align: center;"><button style="background: #2e7d32; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-family: inherit; cursor: pointer; width: 100%;">Pre-order Lighting System - $199</button></div>'
             }
         ];
     }
