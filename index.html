@@ -16,7 +16,7 @@
     <div id="loading-screen" class="loading-screen">
         <div class="loading-content">
             <div class="logo">
-                <h1><span class="logo-heavy">nominal</span><span class="logo-light">co</span></h1>
+                <h1><span class="logo-heavy" data-content="site.logoHeavy">nominal</span><span class="logo-light" data-content="site.logoLight">co</span></h1>
             </div>
             <div class="loading-spinner">
                 <div class="spinner"></div>
@@ -29,7 +29,7 @@
         <header class="header">
             <nav class="nav">
                 <div class="logo">
-                    <h1><span class="logo-heavy">nominal</span><span class="logo-light">co</span></h1>
+                    <h1><span class="logo-heavy" data-content="site.logoHeavy">nominal</span><span class="logo-light" data-content="site.logoLight">co</span></h1>
                 </div>
                 <button class="hamburger" aria-label="Toggle navigation">
                     <span></span>
@@ -37,9 +37,9 @@
                     <span></span>
                 </button>
                 <ul class="nav-links">
-                    <li><a href="#work">Work</a></li>
-                    <li><a href="#about">About</a></li>
-                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="#work" data-content="nav.work">Work</a></li>
+                    <li><a href="#about" data-content="nav.about">About</a></li>
+                    <li><a href="#contact" data-content="nav.contact">Contact</a></li>
                 </ul>
             </nav>
         </header>
@@ -79,6 +79,54 @@
                 </div>
             </section>
         </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-container">
+                <div class="footer-content">
+                    <div class="footer-left">
+                        <div class="footer-logo">
+                            <h3><span class="logo-heavy footer-logo-heavy"></span><span class="logo-light footer-logo-light"></span></h3>
+                        </div>
+                        <p class="footer-tagline"></p>
+                    </div>
+                    
+                    <div class="footer-center">
+                        <div class="footer-links">
+                            <div class="footer-section footer-work-section">
+                                <h4 class="footer-work-title"></h4>
+                                <ul class="footer-work-links">
+                                    <!-- Work links will be populated dynamically -->
+                                </ul>
+                            </div>
+                            <div class="footer-section footer-connect-section">
+                                <h4 class="footer-connect-title"></h4>
+                                <ul class="footer-connect-links">
+                                    <!-- Connect links will be populated dynamically -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-right">
+                        <div class="footer-cta">
+                            <h4 class="footer-cta-title"></h4>
+                            <a href="#contact" class="footer-cta-button"></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer-bottom">
+                    <div class="footer-bottom-left">
+                        <p class="footer-copyright"></p>
+                    </div>
+                    <div class="footer-bottom-right">
+                        <p class="footer-signature"></p>
+                        <div class="footer-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </footer>
 
         <!-- Enhanced Case Study Modal -->
         <div id="project-modal" class="case-study-modal">

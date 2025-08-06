@@ -2,6 +2,9 @@ key,value
 site.title,nominalco
 site.logoHeavy,nominal
 site.logoLight,co
+nav.work,Work
+nav.about,About
+nav.contact,Contact
 hero.title,Multi-disciplinary art and design studio.
 hero.subtitle,We design objects, interfaces, and ideas.
 work.title,Selected Work

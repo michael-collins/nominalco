@@ -3,6 +3,7 @@ class AppManager {
     constructor() {
         this.contentManager = null;
         this.portfolioManager = null;
+        this.footerManager = null;
         this.isContentLoaded = false;
         this.isProjectsLoaded = false;
     }
@@ -12,14 +13,16 @@ class AppManager {
             // Show loading screen
             this.showLoadingScreen();
 
-            // Initialize content and portfolio managers in parallel
-            const [contentManager, portfolioManager] = await Promise.all([
+            // Initialize content, portfolio, and footer managers in parallel
+            const [contentManager, portfolioManager, footerManager] = await Promise.all([
                 this.initContentManager(),
-                this.initPortfolioManager()
+                this.initPortfolioManager(),
+                this.initFooterManager()
             ]);
 
             this.contentManager = contentManager;
             this.portfolioManager = portfolioManager;
+            this.footerManager = footerManager;
 
             // Hide loading screen and show main content
             setTimeout(() => {
@@ -48,6 +51,12 @@ class AppManager {
         const portfolioManager = new EnhancedPortfolioManager();
         await portfolioManager.init();
         return portfolioManager;
+    }
+
+    async initFooterManager() {
+        const footerManager = new FooterManager();
+        await footerManager.init();
+        return footerManager;
     }
 
     showLoadingScreen() {
@@ -199,6 +208,11 @@ class ContentManager {
     getDefaultContent() {
         return {
             'site.title': 'nominalco',
+            'site.logoHeavy': 'nominal',
+            'site.logoLight': 'co',
+            'nav.work': 'Work',
+            'nav.about': 'About',
+            'nav.contact': 'Contact',
             'hero.title': 'Multi-disciplinary art and design studio.',
             'hero.subtitle': 'We design objects, interfaces, and ideas.',
             'work.title': 'Selected Work',
@@ -251,8 +265,25 @@ class ContentManager {
             }
         });
 
+        // Apply content using data attributes (for navigation and logo)
+        this.applyDataAttributeContent();
+
         // Handle dynamic content areas
         this.applyDynamicContent();
+    }
+
+    applyDataAttributeContent() {
+        // Find all elements with data-content attributes and populate them
+        const elementsWithDataContent = document.querySelectorAll('[data-content]');
+        
+        elementsWithDataContent.forEach(element => {
+            const contentKey = element.getAttribute('data-content');
+            const contentValue = this.content[contentKey] || this.getDefaultContent()[contentKey];
+            
+            if (contentValue) {
+                element.textContent = contentValue;
+            }
+        });
     }
 
     applyDynamicContent() {
@@ -301,6 +332,270 @@ class ContentManager {
             paragraph.textContent = this.content[key];
             container.appendChild(paragraph);
         });
+    }
+}
+
+// Footer management from Google Sheets
+class FooterManager {
+    constructor() {
+        this.footerData = {
+            content: {},
+            links: {}
+        };
+    }
+
+    async init() {
+        await this.loadFooterData();
+        this.applyFooterContent();
+    }
+
+    async loadFooterData() {
+        try {
+            // Pull footer data from Footer tab in Google Sheets
+            const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
+            const FOOTER_SHEET_NAME = 'Footer'; // Footer sheet tab
+            const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${FOOTER_SHEET_NAME}`;
+            
+            const response = await fetch(csvUrl);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch footer data from Google Sheets');
+            }
+            
+            const csvText = await response.text();
+            const data = this.parseCSV(csvText);
+            this.footerData = this.transformFooterData(data);
+            
+            console.log('✅ Footer data loaded from Google Sheets');
+        } catch (error) {
+            console.warn('⚠️ Could not load footer data from Google Sheets, using default content');
+            console.warn('Error:', error.message);
+            this.footerData = this.getDefaultFooterData();
+        }
+    }
+
+    parseCSV(csvText) {
+        const lines = csvText.split('\n');
+        const result = [];
+        let currentRow = [];
+        let currentField = '';
+        let inQuotes = false;
+
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex];
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        // Escaped quote within quoted field
+                        currentField += '"';
+                        i++; // Skip next quote
+                    } else {
+                        // Toggle quote state
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // Field separator - end current field
+                    currentRow.push(currentField.trim());
+                    currentField = '';
+                } else {
+                    // Regular character
+                    currentField += char;
+                }
+            }
+            
+            // End of line
+            if (inQuotes) {
+                // We're inside a quoted field that spans multiple lines
+                currentField += '\n'; // Preserve the line break
+            } else {
+                // End of row
+                currentRow.push(currentField.trim());
+                if (currentRow.length > 0 && currentRow.some(field => field !== '')) {
+                    result.push([...currentRow]);
+                }
+                currentRow = [];
+                currentField = '';
+            }
+        }
+        
+        // Handle final row if exists
+        if (currentRow.length > 0 || currentField !== '') {
+            if (currentField !== '') currentRow.push(currentField.trim());
+            if (currentRow.some(field => field !== '')) {
+                result.push(currentRow);
+            }
+        }
+
+        // Convert to object format
+        if (result.length === 0) return [];
+        
+        const headers = result[0];
+        const data = [];
+
+        for (let i = 1; i < result.length; i++) {
+            const row = {};
+            headers.forEach((header, index) => {
+                row[header] = result[i][index] || '';
+            });
+            data.push(row);
+        }
+
+        return data;
+    }
+
+    transformFooterData(sheetData) {
+        const footerData = {
+            content: {},
+            links: {
+                work: [],
+                connect: []
+            }
+        };
+        
+        sheetData.forEach(row => {
+            if (!row.type || !row.key) return;
+            
+            const type = row.type.trim().toLowerCase();
+            const key = row.key.trim();
+            const value = row.value?.trim() || '';
+            const url = row.url?.trim() || '';
+            const section = row.section?.trim().toLowerCase() || '';
+            
+            if (type === 'content') {
+                footerData.content[key] = value;
+            } else if (type === 'link') {
+                const linkData = { 
+                    text: value, 
+                    url: url,
+                    key: key
+                };
+                
+                if (section === 'work') {
+                    footerData.links.work.push(linkData);
+                } else if (section === 'connect') {
+                    footerData.links.connect.push(linkData);
+                }
+            }
+        });
+
+        return footerData;
+    }
+
+    getDefaultFooterData() {
+        return {
+            content: {
+                'logo.heavy': 'nominal',
+                'logo.light': 'co',
+                'tagline': 'Crafting digital experiences that matter',
+                'work.title': 'Work',
+                'connect.title': 'Connect',
+                'cta.title': 'Ready to start a project?',
+                'cta.button': 'Let\'s talk',
+                'copyright': '© 2025 nominalco. All rights reserved.',
+                'signature': 'Designed & developed with care'
+            },
+            links: {
+                work: [
+                    { text: 'Portfolio', url: '#work', key: 'portfolio' },
+                    { text: 'Process', url: '#about', key: 'process' },
+                    { text: 'Case Studies', url: '#contact', key: 'case-studies' }
+                ],
+                connect: [
+                    { text: 'hello@nominalco.com', url: 'mailto:hello@nominalco.com', key: 'email' },
+                    { text: 'LinkedIn', url: 'https://linkedin.com/company/nominalco', key: 'linkedin' },
+                    { text: 'Twitter', url: 'https://twitter.com/nominalco', key: 'twitter' }
+                ]
+            }
+        };
+    }
+
+    applyFooterContent() {
+        // Apply logo content
+        const logoHeavy = document.querySelector('.footer-logo .logo-heavy');
+        const logoLight = document.querySelector('.footer-logo .logo-light');
+        
+        if (logoHeavy) logoHeavy.textContent = this.footerData.content['logo.heavy'] || 'nominal';
+        if (logoLight) logoLight.textContent = this.footerData.content['logo.light'] || 'co';
+        
+        // Apply tagline
+        const tagline = document.querySelector('.footer-tagline');
+        if (tagline) tagline.textContent = this.footerData.content['tagline'] || 'Crafting digital experiences that matter';
+        
+        // Apply section titles
+        const workTitle = document.querySelector('.footer-links .footer-section:first-child h4');
+        const connectTitle = document.querySelector('.footer-links .footer-section:last-child h4');
+        
+        if (workTitle) workTitle.textContent = this.footerData.content['work.title'] || 'Work';
+        if (connectTitle) connectTitle.textContent = this.footerData.content['connect.title'] || 'Connect';
+        
+        // Apply CTA content
+        const ctaTitle = document.querySelector('.footer-cta h4');
+        const ctaButton = document.querySelector('.footer-cta-button');
+        
+        if (ctaTitle) ctaTitle.textContent = this.footerData.content['cta.title'] || 'Ready to start a project?';
+        if (ctaButton) ctaButton.textContent = this.footerData.content['cta.button'] || 'Let\'s talk';
+        
+        // Apply bottom content
+        const copyright = document.querySelector('.footer-bottom-left p');
+        const signature = document.querySelector('.footer-bottom-right p');
+        
+        if (copyright) copyright.textContent = this.footerData.content['copyright'] || '© 2025 nominalco. All rights reserved.';
+        if (signature) signature.textContent = this.footerData.content['signature'] || 'Designed & developed with care';
+        
+        // Apply dynamic links
+        this.applyFooterLinks();
+    }
+
+    applyFooterLinks() {
+        // Apply work section links
+        const workList = document.querySelector('.footer-links .footer-section:first-child ul');
+        if (workList && this.footerData.links.work.length > 0) {
+            workList.innerHTML = '';
+            this.footerData.links.work.forEach(link => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = link.url;
+                a.textContent = link.text;
+                
+                // Add target="_blank" for external links
+                if (link.url.startsWith('http')) {
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                }
+                
+                li.appendChild(a);
+                workList.appendChild(li);
+            });
+        }
+        
+        // Apply connect section links
+        const connectList = document.querySelector('.footer-links .footer-section:last-child ul');
+        if (connectList && this.footerData.links.connect.length > 0) {
+            connectList.innerHTML = '';
+            this.footerData.links.connect.forEach(link => {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = link.url;
+                a.textContent = link.text;
+                
+                // Add special class for email
+                if (link.key === 'email' || link.url.startsWith('mailto:')) {
+                    a.className = 'footer-email';
+                }
+                
+                // Add target="_blank" for external links (not email)
+                if (link.url.startsWith('http')) {
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                }
+                
+                li.appendChild(a);
+                connectList.appendChild(li);
+            });
+        }
     }
 }
 

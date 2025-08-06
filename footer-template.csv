@@ -1,0 +1,17 @@
+type,key,value,url,section
+content,logo.heavy,nominal,,
+content,logo.light,co,,
+content,tagline,Crafting digital experiences that matter,,
+content,work.title,Work,,
+content,connect.title,Connect,,
+content,cta.title,Ready to start a project?,,
+content,cta.button,Let's talk,,
+content,copyright,© 2025 nominalco. All rights reserved.,,
+content,signature,Designed & developed with care,,
+link,portfolio,Portfolio,#work,work
+link,process,Process,#about,work
+link,case-studies,Case Studies,#contact,work
+link,email,hello@nominalco.com,mailto:hello@nominalco.com,connect
+link,linkedin,LinkedIn,https://linkedin.com/company/nominalco,connect
+link,twitter,Twitter,https://twitter.com/nominalco,connect
+link,instagram,Instagram,https://instagram.com/nominalco,connect
