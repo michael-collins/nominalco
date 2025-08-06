@@ -6,6 +6,7 @@ content,work.title,Work,,
 content,connect.title,Connect,,
 content,cta.title,Ready to start a project?,,
 content,cta.button,Let's talk,,
+content,cta.disabled,false,,
 content,copyright,© 2025 nominalco. All rights reserved.,,
 content,signature,Designed & developed with care,,
 link,portfolio,Portfolio,#work,work

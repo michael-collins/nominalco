@@ -494,6 +494,7 @@ class FooterManager {
                 'connect.title': 'Connect',
                 'cta.title': 'Ready to start a project?',
                 'cta.button': 'Let\'s talk',
+                'cta.disabled': 'false',
                 'copyright': '© 2025 nominalco. All rights reserved.',
                 'signature': 'Designed & developed with care'
             },
@@ -531,12 +532,35 @@ class FooterManager {
         if (workTitle) workTitle.textContent = this.footerData.content['work.title'] || 'Work';
         if (connectTitle) connectTitle.textContent = this.footerData.content['connect.title'] || 'Connect';
         
-        // Apply CTA content
-        const ctaTitle = document.querySelector('.footer-cta h4');
-        const ctaButton = document.querySelector('.footer-cta-button');
+        // Handle CTA section (show/hide based on disabled setting)
+        const ctaContainer = document.querySelector('.footer-right');
+        const ctaDisabled = this.footerData.content['cta.disabled'];
+        const isCtaDisabled = ctaDisabled === 'true' || ctaDisabled === true;
         
-        if (ctaTitle) ctaTitle.textContent = this.footerData.content['cta.title'] || 'Ready to start a project?';
-        if (ctaButton) ctaButton.textContent = this.footerData.content['cta.button'] || 'Let\'s talk';
+        if (ctaContainer) {
+            if (isCtaDisabled) {
+                ctaContainer.style.display = 'none';
+                // Adjust grid layout to 2 columns when CTA is hidden
+                const footerContent = document.querySelector('.footer-content');
+                if (footerContent) {
+                    footerContent.style.gridTemplateColumns = '1fr 2fr';
+                }
+            } else {
+                ctaContainer.style.display = 'block';
+                // Reset to 3 columns when CTA is shown
+                const footerContent = document.querySelector('.footer-content');
+                if (footerContent) {
+                    footerContent.style.gridTemplateColumns = '1fr 2fr 1fr';
+                }
+                
+                // Apply CTA content
+                const ctaTitle = document.querySelector('.footer-cta h4');
+                const ctaButton = document.querySelector('.footer-cta-button');
+                
+                if (ctaTitle) ctaTitle.textContent = this.footerData.content['cta.title'] || 'Ready to start a project?';
+                if (ctaButton) ctaButton.textContent = this.footerData.content['cta.button'] || 'Let\'s talk';
+            }
+        }
         
         // Apply bottom content
         const copyright = document.querySelector('.footer-bottom-left p');
