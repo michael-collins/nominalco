@@ -461,35 +461,53 @@ class TerminalPrompt {
     }
 
     handleCommand(command) {
+        console.log('handleCommand called with:', `"${command}"`);
+        
         // Parse and execute command first
         const trimmedCommand = command.trim().toLowerCase();
+        console.log('Trimmed command:', `"${trimmedCommand}"`);
+        
         let shouldHideTerminal = true; // Default behavior
         
         if (trimmedCommand === 'hello nominalco') {
+            console.log('Executing hello nominalco');
             this.executeHelloCommand();
         } else if (trimmedCommand === 'recolor the website') {
+            console.log('Executing recolor the website');
             this.executeRecolorCommand();
         } else if (trimmedCommand === 'reset colors' || trimmedCommand === 'reset') {
+            console.log('Executing reset');
             this.resetColors();
         } else if (trimmedCommand.startsWith('open ')) {
+            console.log('Executing open command');
             this.executeOpenCommand(trimmedCommand);
         } else if (this.isNavigationCommand(trimmedCommand)) {
+            console.log('Executing navigation command');
             this.executeNavigationCommand(trimmedCommand);
         } else if (this.isPortfolioCommand(trimmedCommand)) {
-            // Portfolio commands that show overlays should hide terminal
-            // Portfolio commands that show info in terminal should keep it open
-            if (trimmedCommand === 'list projects' || trimmedCommand === 'help') {
+            console.log('Detected as portfolio command:', trimmedCommand);
+            // Execute the portfolio command
+            if (trimmedCommand === 'list projects') {
+                console.log('Executing list projects');
+                this.executePortfolioCommand(trimmedCommand);
+                shouldHideTerminal = false; // Keep terminal open to show results
+            } else if (trimmedCommand === 'help') {
+                console.log('Executing help from portfolio');
                 shouldHideTerminal = true; // These show overlays
             } else {
+                console.log('Executing other portfolio command:', trimmedCommand);
                 shouldHideTerminal = this.executePortfolioCommand(trimmedCommand);
             }
         } else if (trimmedCommand === 'help') {
+            console.log('Executing help');
             shouldHideTerminal = true; // Help shows overlay
             this.showHelp();
         } else if (trimmedCommand === '') {
+            console.log('Empty command');
             // Empty command - just hide terminal
             shouldHideTerminal = true;
         } else {
+            console.log('Unknown command:', trimmedCommand);
             // Unknown command - show feedback in terminal, keep it open
             shouldHideTerminal = false;
             this.showCommandFeedback(`Unknown command: "${command}". Type "help" for available commands.`);
@@ -952,7 +970,7 @@ class TerminalPrompt {
         switch (command) {
             case 'list projects':
                 this.listProjects();
-                return true; // Hide terminal (shows overlay)
+                return false; // Keep terminal open (shows results in terminal)
             case 'random project':
                 this.openRandomProject();
                 return true; // Hide terminal (opens project)
@@ -1065,19 +1083,24 @@ class TerminalPrompt {
         const value = this.input.value;
         const trimmedValue = value.trim();
         
+        console.log('Tab completion triggered for:', `"${value}"`);
+        
         // If empty or just starting, show all commands
         if (trimmedValue === '' || trimmedValue === 'open') {
+            console.log('Showing all commands');
             this.showAllCommands();
             return;
         }
         
         // Handle "open " specifically for projects
         if (trimmedValue.toLowerCase() === 'open ' || trimmedValue.toLowerCase().startsWith('open ')) {
+            console.log('Handling project completion for:', trimmedValue);
             this.handleProjectCompletion(trimmedValue);
             return;
         }
         
         // Handle general command completion
+        console.log('Handling general completion for:', trimmedValue);
         this.handleGeneralCompletion(trimmedValue);
     }
 
@@ -1087,15 +1110,20 @@ class TerminalPrompt {
             cmd.toLowerCase().startsWith(input.toLowerCase())
         );
         
+        console.log('General completion - input:', input, 'matches:', matches);
+        
         if (matches.length === 1) {
             // Single match - auto-complete
+            console.log('Auto-completing to:', matches[0]);
             this.input.value = matches[0];
             this.hideSuggestions();
         } else if (matches.length > 1) {
             // Multiple matches - show suggestions
+            console.log('Showing suggestions for multiple matches:', matches);
             this.showCommandSuggestions(matches, input);
         } else {
             // No matches
+            console.log('No matches found for:', input);
             this.hideSuggestions();
         }
     }
@@ -1424,64 +1452,31 @@ class TerminalPrompt {
     }
 
     showProjectsList() {
-        // Create overlay
-        const overlay = document.createElement('div');
-        overlay.className = 'projects-list-overlay';
+        // Debug project loading
+        console.log('showProjectsList called');
+        console.log('Available projects:', this.availableProjects.length);
         
-        // Create content container
-        const container = document.createElement('div');
-        container.className = 'projects-list-container';
-        
-        // Create title
-        const title = document.createElement('h3');
-        title.textContent = 'Available Projects';
-        title.className = 'projects-list-title';
-        container.appendChild(title);
-        
-        // Create projects list
+        // Get unique projects
         const uniqueProjects = this.getUniqueProjects();
+        console.log('Unique projects:', uniqueProjects.length);
+        
+        if (uniqueProjects.length === 0) {
+            this.showCommandFeedback('No projects available. Try waiting a moment for projects to load, then try again.');
+            return;
+        }
+
+        // Create terminal display of projects
+        let projectsList = 'Available Projects:\n\n';
         uniqueProjects.forEach((project, index) => {
-            const item = document.createElement('div');
-            item.className = 'projects-list-item';
-            item.innerHTML = `
-                <span class="project-number">${index + 1}.</span>
-                <span class="project-name">${project.fullName}</span>
-                <span class="project-command">open ${project.name}</span>
-            `;
-            
-            item.addEventListener('click', () => {
-                overlay.remove();
-                this.navigateToProject(project);
-            });
-            
-            container.appendChild(item);
+            projectsList += `${index + 1}. ${project.fullName}\n`;
+            projectsList += `   Command: open ${project.name}\n\n`;
         });
         
-        // Add close instruction
-        const instruction = document.createElement('p');
-        instruction.textContent = 'Click a project to open it, or press Escape to close';
-        instruction.className = 'projects-list-instruction';
-        container.appendChild(instruction);
+        projectsList += `\nTotal: ${uniqueProjects.length} projects\n`;
+        projectsList += 'Type "open [project-name]" to open a project';
         
-        overlay.appendChild(container);
-        document.body.appendChild(overlay);
-        
-        // Add styles
-        this.addProjectsListStyles();
-        
-        // Close on escape or click outside
-        const closeHandler = (e) => {
-            if (e.key === 'Escape' || !container.contains(e.target)) {
-                overlay.remove();
-                document.removeEventListener('keydown', closeHandler);
-                document.removeEventListener('click', closeHandler);
-            }
-        };
-        
-        setTimeout(() => {
-            document.addEventListener('keydown', closeHandler);
-            document.addEventListener('click', closeHandler);
-        }, 100);
+        this.showCommandFeedback(projectsList);
+        console.log('Projects listed in terminal');
     }
 
     showHelpOverlay() {
@@ -1631,75 +1626,137 @@ class TerminalPrompt {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.8);
+                background: rgba(0, 0, 0, 0.95);
                 z-index: 10000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 animation: fadeIn 0.3s ease-in-out;
+                backdrop-filter: blur(10px);
             }
             
             .projects-list-container {
-                background: #000;
-                color: #00ff00;
-                padding: 30px;
-                border-radius: 8px;
-                border: 1px solid #333;
-                max-width: 500px;
-                max-height: 70vh;
+                background: linear-gradient(135deg, #000000 0%, #111111 100%);
+                color: #ffffff;
+                padding: 40px;
+                border-radius: 12px;
+                max-width: 600px;
+                max-height: 80vh;
                 overflow-y: auto;
-                font-family: 'Courier New', monospace;
+                font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Menlo', 'Consolas', monospace;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
             
             .projects-list-title {
-                margin: 0 0 20px 0;
-                color: #00ff00;
-                font-size: 18px;
-                font-weight: bold;
+                margin: 0 0 30px 0;
+                color: #ffffff;
+                font-size: 24px;
+                font-weight: 600;
                 text-align: center;
+                letter-spacing: -0.5px;
             }
             
             .projects-list-item {
                 display: flex;
                 align-items: center;
-                padding: 8px 12px;
-                margin: 4px 0;
+                padding: 12px 16px;
+                margin: 8px 0;
                 cursor: pointer;
-                border-radius: 4px;
-                transition: background-color 0.2s ease;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
             
             .projects-list-item:hover {
-                background: #333;
+                background: rgba(255, 255, 255, 0.1);
+                transform: translateX(4px);
+                border-color: rgba(255, 255, 255, 0.2);
             }
             
             .project-number {
-                color: #888;
-                margin-right: 12px;
-                min-width: 20px;
+                color: #888888;
+                margin-right: 16px;
+                min-width: 30px;
+                font-weight: 600;
+                font-size: 14px;
             }
             
             .project-name {
                 flex: 1;
-                margin-right: 12px;
+                margin-right: 16px;
+                font-weight: 500;
+                color: #ffffff;
             }
             
             .project-command {
-                color: #666;
+                color: rgb(255, 99, 72);
                 font-size: 12px;
-                font-style: italic;
+                font-weight: 500;
+                background: rgba(255, 99, 72, 0.1);
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-family: inherit;
             }
             
             .projects-list-instruction {
-                margin: 20px 0 0 0;
+                margin: 30px 0 0 0;
                 text-align: center;
-                color: #888;
-                font-size: 12px;
+                color: #888888;
+                font-size: 13px;
+                padding: 16px;
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 6px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            /* Scrollbar styling */
+            .projects-list-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            
+            .projects-list-container::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 4px;
+            }
+            
+            .projects-list-container::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 4px;
+            }
+            
+            .projects-list-container::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.3);
             }
             
             @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
+                from { opacity: 0; transform: scale(0.9); }
+                to { opacity: 1; transform: scale(1); }
+            }
+            
+            /* Responsive design */
+            @media (max-width: 768px) {
+                .projects-list-container {
+                    margin: 20px;
+                    padding: 30px 20px;
+                    max-width: calc(100vw - 40px);
+                }
+                
+                .projects-list-item {
+                    flex-direction: column;
+                    align-items: flex-start;
+                    text-align: left;
+                }
+                
+                .project-number {
+                    margin-bottom: 5px;
+                }
+                
+                .project-command {
+                    margin-top: 5px;
+                    align-self: flex-end;
+                }
             }
         `;
         document.head.appendChild(style);
@@ -1717,38 +1774,41 @@ class TerminalPrompt {
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.95);
+                background: rgba(255, 255, 255, 0.9);
                 z-index: 10000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 animation: fadeIn 0.3s ease-in-out;
-                backdrop-filter: blur(10px);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
             }
             
             .help-container {
-                background: linear-gradient(135deg, #000000 0%, #111111 100%);
-                color: #ffffff;
+                background: transparent;
+                -webkit-backdrop-filter: blur(10px);
+                color: #000000;
                 padding: 40px;
                 border-radius: 12px;
                 max-width: 900px;
                 max-height: 85vh;
                 overflow-y: auto;
                 font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Menlo', 'Consolas', monospace;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
                 position: relative;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                
             }
             
             .help-header {
                 text-align: center;
                 margin-bottom: 30px;
-                border-bottom: 2px solid #333333;
+                border-bottom: 2px solid #eeeeee;
                 padding-bottom: 20px;
             }
             
             .help-header h2 {
                 margin: 0 0 10px 0;
-                color: #ffffff;
+                color: #000000;
                 font-size: 28px;
                 font-weight: 600;
                 letter-spacing: -0.5px;
@@ -1756,7 +1816,7 @@ class TerminalPrompt {
             
             .help-subtitle {
                 margin: 0;
-                color: #aaaaaa;
+                color: #666666;
                 font-size: 14px;
                 font-style: italic;
             }
@@ -1769,21 +1829,23 @@ class TerminalPrompt {
             }
             
             .help-section {
-                background: rgba(255, 255, 255, 0.03);
+                background: rgba(255, 255, 255, 0.4);
                 border-radius: 8px;
                 padding: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(5px);
+                -webkit-backdrop-filter: blur(5px);
             }
             
             .help-section-header {
                 margin-bottom: 15px;
                 padding-bottom: 10px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.5);
             }
             
             .help-section h3 {
                 margin: 0;
-                color: #ffffff;
+                color: #000000;
                 font-size: 16px;
                 font-weight: 600;
             }
@@ -1798,10 +1860,11 @@ class TerminalPrompt {
                 margin: 10px 0;
                 font-size: 13px;
                 line-height: 1.4;
+                color: #000000;
             }
             
             .help-command code {
-                background: rgba(255, 255, 255, 0.1);
+                background: rgba(0, 0, 0, 0.1);
                 padding: 4px 8px;
                 border-radius: 4px;
                 margin-right: 12px;
@@ -1809,7 +1872,8 @@ class TerminalPrompt {
                 display: inline-block;
                 font-size: 12px;
                 font-weight: 500;
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                color: #000000;
             }
             
             /* Color coding for command types */
@@ -1838,50 +1902,50 @@ class TerminalPrompt {
             }
             
             .cmd-desc {
-                color: #cccccc;
+                color: #444444;
                 font-size: 13px;
             }
             
             .help-tip {
                 margin: 8px 0;
                 padding: 8px 12px;
-                background: rgba(255, 255, 255, 0.05);
+                background: rgba(0, 0, 0, 0.05);
                 border-radius: 4px;
                 font-size: 12px;
-                color: #aaaaaa;
-                border-left: 3px solid #666666;
+                color: #666666;
+                border-left: 3px solid #cccccc;
             }
             
             .help-tip strong {
-                color: #ffffff;
+                color: #000000;
             }
             
             .help-tip kbd {
-                background: rgba(255, 255, 255, 0.2);
-                color: #ffffff;
+                background: rgba(0, 0, 0, 0.1);
+                color: #000000;
                 padding: 2px 6px;
                 border-radius: 3px;
                 font-size: 11px;
                 font-family: inherit;
-                border: 1px solid rgba(255, 255, 255, 0.3);
+                border: 1px solid rgba(0, 0, 0, 0.2);
             }
             
             .help-footer {
                 text-align: center;
                 padding-top: 20px;
-                border-top: 1px solid #333333;
-                color: #888888;
+                border-top: 1px solid #eeeeee;
+                color: #666666;
                 font-size: 12px;
             }
             
             .help-footer kbd {
-                background: rgba(255, 255, 255, 0.1);
-                color: #ffffff;
+                background: rgba(0, 0, 0, 0.1);
+                color: #000000;
                 padding: 2px 6px;
                 border-radius: 3px;
                 font-size: 11px;
                 margin: 0 2px;
-                border: 1px solid rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(0, 0, 0, 0.2);
             }
             
             /* Scrollbar styling */
@@ -1890,17 +1954,17 @@ class TerminalPrompt {
             }
             
             .help-container::-webkit-scrollbar-track {
-                background: rgba(255, 255, 255, 0.05);
+                background: rgba(0, 0, 0, 0.05);
                 border-radius: 4px;
             }
             
             .help-container::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.2);
+                background: rgba(0, 0, 0, 0.2);
                 border-radius: 4px;
             }
             
             .help-container::-webkit-scrollbar-thumb:hover {
-                background: rgba(255, 255, 255, 0.3);
+                background: rgba(0, 0, 0, 0.3);
             }
             
             @keyframes fadeIn {
@@ -1966,14 +2030,17 @@ class TerminalPrompt {
         style.id = 'terminal-feedback-styles';
         style.textContent = `
             .terminal-feedback {
-                padding: 8px 16px;
-                background: #111;
-                color: #00ff00;
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                border-top: 1px solid #333;
+                padding: 12px 20px;
+                background: linear-gradient(135deg, #111111 0%, #222222 100%);
+                color: #ffffff;
+                font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Menlo', 'Consolas', monospace;
+                font-size: 14px;
+                font-weight: 500;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
                 display: none;
                 animation: feedbackSlide 0.3s ease-in-out;
+                line-height: 1.4;
+                white-space: pre-line;
             }
             
             @keyframes feedbackSlide {
