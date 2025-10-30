@@ -760,9 +760,16 @@ class CaseStudyModal {
         this.modal.style.display = 'block';
         document.body.style.overflow = 'hidden';
         
+        // Store the previously focused element to return focus to it later
+        this.previouslyFocusedElement = document.activeElement;
+        
         // Trigger entrance animation
         setTimeout(() => {
             this.modal.classList.add('active');
+            // Set focus to the modal content for keyboard accessibility
+            this.setInitialFocus();
+            // Setup focus trap after content is populated (including gallery)
+            this.setupFocusTrap();
         }, 50);
         
         // Reset scroll position
@@ -1050,17 +1057,47 @@ class CaseStudyModal {
         validImages.forEach((image, index) => {
             const galleryItem = document.createElement('div');
             galleryItem.className = 'gallery-item';
+            
+            // Make gallery items keyboard accessible
+            galleryItem.setAttribute('tabindex', '0');
+            galleryItem.setAttribute('role', 'button');
+            galleryItem.setAttribute('aria-label', `View image ${index + 1} of ${validImages.length} in lightbox`);
+            
+            console.log('Created gallery item with tabindex:', galleryItem.getAttribute('tabindex'));
+            
             galleryItem.innerHTML = `
                 <img src="${image}" alt="Project detail ${index + 1}" loading="lazy">
             `;
             
             // Add click handler for lightbox
-            galleryItem.addEventListener('click', () => {
-                this.openLightbox(validImages, index);
+            const openLightbox = () => this.openLightbox(validImages, index);
+            galleryItem.addEventListener('click', openLightbox);
+            
+            // Add keyboard handler
+            galleryItem.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openLightbox();
+                }
+            });
+
+            // Add focus handler to ensure gallery item scrolls into view
+            galleryItem.addEventListener('focus', () => {
+                console.log('Gallery item focused:', index + 1);
+                setTimeout(() => {
+                    galleryItem.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }, 100);
             });
             
             gallery.appendChild(galleryItem);
         });
+
+        // Refresh focus trap to include new gallery items
+        this.refreshFocusTrap();
     }
     
     openLightbox(images, startIndex) {
@@ -1091,14 +1128,27 @@ class CaseStudyModal {
         
         document.body.appendChild(lightbox);
         
-        // Event listeners
+        // Store the previously focused element for lightbox
+        const lightboxPreviousFocus = document.activeElement;
+        
+        // Focus the close button initially
         const closeBtn = lightbox.querySelector('.lightbox-close');
+        closeBtn.focus();
+        
+        // Event listeners
         const prevBtn = lightbox.querySelector('.lightbox-prev');
         const nextBtn = lightbox.querySelector('.lightbox-next');
         
-        closeBtn.addEventListener('click', () => {
+        const closeLightbox = () => {
             document.body.removeChild(lightbox);
-        });
+            document.removeEventListener('keydown', handleKeydown);
+            // Return focus to the gallery item that opened the lightbox
+            if (lightboxPreviousFocus) {
+                lightboxPreviousFocus.focus();
+            }
+        };
+        
+        closeBtn.addEventListener('click', closeLightbox);
         
         prevBtn.addEventListener('click', () => {
             currentIndex = (currentIndex - 1 + images.length) % images.length;
@@ -1113,7 +1163,7 @@ class CaseStudyModal {
         // Close on background click
         lightbox.addEventListener('click', (e) => {
             if (e.target === lightbox) {
-                document.body.removeChild(lightbox);
+                closeLightbox();
             }
         });
         
@@ -1121,16 +1171,35 @@ class CaseStudyModal {
         const handleKeydown = (e) => {
             switch(e.key) {
                 case 'Escape':
-                    document.body.removeChild(lightbox);
-                    document.removeEventListener('keydown', handleKeydown);
+                    closeLightbox();
                     break;
                 case 'ArrowLeft':
+                    e.preventDefault();
                     currentIndex = (currentIndex - 1 + images.length) % images.length;
                     updateLightboxImage();
                     break;
                 case 'ArrowRight':
+                    e.preventDefault();
                     currentIndex = (currentIndex + 1) % images.length;
                     updateLightboxImage();
+                    break;
+                case 'Tab':
+                    // Trap focus within lightbox controls
+                    const focusableElements = lightbox.querySelectorAll('button:not([disabled])');
+                    const firstElement = focusableElements[0];
+                    const lastElement = focusableElements[focusableElements.length - 1];
+                    
+                    if (e.shiftKey) {
+                        if (document.activeElement === firstElement) {
+                            lastElement.focus();
+                            e.preventDefault();
+                        }
+                    } else {
+                        if (document.activeElement === lastElement) {
+                            firstElement.focus();
+                            e.preventDefault();
+                        }
+                    }
                     break;
             }
         };
@@ -1251,10 +1320,128 @@ class CaseStudyModal {
     
     closeCaseStudy() {
         this.modal.classList.remove('active');
+        
+        // Remove focus trap
+        this.removeFocusTrap();
+        
         setTimeout(() => {
             this.modal.style.display = 'none';
             document.body.style.overflow = 'auto';
+            
+            // Return focus to the previously focused element
+            if (this.previouslyFocusedElement) {
+                this.previouslyFocusedElement.focus();
+                this.previouslyFocusedElement = null;
+            }
         }, 600);
+    }
+
+    setInitialFocus() {
+        // Focus on the close button or first focusable element
+        const closeButton = this.modal.querySelector('.nav-close');
+        if (closeButton) {
+            closeButton.focus();
+        } else {
+            // Fallback to modal itself
+            this.modal.setAttribute('tabindex', '-1');
+            this.modal.focus();
+        }
+    }
+
+    setupFocusTrap() {
+        this.refreshFocusTrap();
+    }
+
+    refreshFocusTrap() {
+        // Remove existing focus trap if it exists
+        if (this.trapFocusHandler) {
+            this.modal.removeEventListener('keydown', this.trapFocusHandler);
+        }
+        if (this.focusHandler) {
+            document.removeEventListener('focus', this.focusHandler, true);
+        }
+
+        // Get all focusable elements in the modal (including newly created gallery items)
+        this.focusableElements = this.modal.querySelectorAll(
+            'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable], .gallery-item[tabindex="0"]'
+        );
+        
+        this.firstFocusableElement = this.focusableElements[0];
+        this.lastFocusableElement = this.focusableElements[this.focusableElements.length - 1];
+
+        console.log('Focus trap updated. Found', this.focusableElements.length, 'focusable elements');
+
+        // Add keydown listener for focus trapping
+        this.trapFocusHandler = (e) => {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    if (document.activeElement === this.firstFocusableElement) {
+                        this.lastFocusableElement.focus();
+                        this.scrollElementIntoView(this.lastFocusableElement);
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === this.lastFocusableElement) {
+                        this.firstFocusableElement.focus();
+                        this.scrollElementIntoView(this.firstFocusableElement);
+                        e.preventDefault();
+                    }
+                }
+            }
+            if (e.key === 'Escape') {
+                this.closeCaseStudy();
+            }
+        };
+
+        // Add focus event listener to handle scrolling for any focused element
+        this.focusHandler = (e) => {
+            if (this.modal.contains(e.target)) {
+                this.scrollElementIntoView(e.target);
+            }
+        };
+
+        this.modal.addEventListener('keydown', this.trapFocusHandler);
+        document.addEventListener('focus', this.focusHandler, true);
+    }
+
+    scrollElementIntoView(element) {
+        // Scroll the element into view within the modal
+        setTimeout(() => {
+            const modalContent = this.modal;
+            const elementRect = element.getBoundingClientRect();
+            const modalRect = modalContent.getBoundingClientRect();
+            
+            // Check if element is outside the visible area
+            const isAbove = elementRect.top < modalRect.top + 100; // Add padding
+            const isBelow = elementRect.bottom > modalRect.bottom - 100; // Add padding
+            
+            if (isAbove || isBelow) {
+                // For better UX, scroll the modal container instead of using default scrollIntoView
+                const elementTop = element.offsetTop;
+                const modalScrollTop = modalContent.scrollTop;
+                const modalHeight = modalContent.clientHeight;
+                const elementHeight = element.offsetHeight;
+                
+                // Calculate the desired scroll position (center the element)
+                const desiredScrollTop = elementTop - (modalHeight / 2) + (elementHeight / 2);
+                
+                modalContent.scrollTo({
+                    top: Math.max(0, desiredScrollTop),
+                    behavior: 'smooth'
+                });
+            }
+        }, 100); // Small delay to ensure focus has been set
+    }
+
+    removeFocusTrap() {
+        if (this.trapFocusHandler) {
+            this.modal.removeEventListener('keydown', this.trapFocusHandler);
+            this.trapFocusHandler = null;
+        }
+        if (this.focusHandler) {
+            document.removeEventListener('focus', this.focusHandler, true);
+            this.focusHandler = null;
+        }
     }
     
     setupEventListeners() {
@@ -1879,7 +2066,24 @@ class PortfolioManager {
     createProjectCard(project) {
         const card = document.createElement('div');
         card.className = 'project-card';
-        card.addEventListener('click', () => this.openProjectModal(project));
+        
+        // Add keyboard accessibility
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `Open project: ${project.title}`);
+        
+        // Debug log
+        console.log('Created project card with tabindex for:', project.title);
+        
+        // Handle both click and keyboard events
+        const openProject = () => this.openProjectModal(project);
+        card.addEventListener('click', openProject);
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openProject();
+            }
+        });
 
         // Extract first sentence or paragraph for card preview
         const getCardDescription = (description) => {

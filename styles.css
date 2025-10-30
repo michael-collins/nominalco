@@ -337,10 +337,22 @@ body {
     position: relative;
     height: 60vh; /* Taller cards for more impact */
     width: 100%;
+    /* Keyboard accessibility */
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.project-card:hover {
+.project-card:hover,
+.project-card:focus {
     transform: translateY(0);
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+}
+
+.project-card:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: -3px;
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .project-image {
@@ -352,7 +364,8 @@ body {
     display: block;
 }
 
-.project-card:hover .project-image {
+.project-card:hover .project-image,
+.project-card:focus .project-image {
     transform: scale(1.05);
 }
 
@@ -379,7 +392,8 @@ body {
     text-align: center;
 }
 
-.project-card:hover .project-overlay {
+.project-card:hover .project-overlay,
+.project-card:focus .project-overlay {
     opacity: 1;
 }
 
@@ -1242,10 +1256,23 @@ body {
     border-radius: 12px;
     cursor: pointer;
     transition: transform 0.3s ease;
+    outline: none;
 }
 
-.gallery-item:hover {
+.gallery-item:hover,
+.gallery-item:focus {
     transform: translateY(-8px);
+}
+
+.gallery-item:focus {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.gallery-item:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(0, 0, 0, 0.1);
 }
 
 .gallery-item img {
@@ -1258,8 +1285,9 @@ body {
     min-height: 100%;
 }
 
-.gallery-item:hover img {
-    transform: scale(1.1);
+.gallery-item:hover img,
+.gallery-item:focus img {
+    transform: scale(1.05);
 }
 
 /* Results Section */
@@ -1668,6 +1696,12 @@ body {
     .project-card {
         height: 50vh; /* Responsive height for mobile */
         border-radius: 0; /* Ensure no rounded corners on mobile */
+    }
+
+    /* Maintain focus visibility on mobile */
+    .project-card:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: -2px;
     }
 
     .project-overlay {
