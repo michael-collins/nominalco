@@ -2032,5 +2032,7 @@ class EnhancedPortfolioManager extends PortfolioManager {
 // Initialize the application when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     const app = new AppManager();
+    // Make app manager globally accessible for terminal navigation
+    window.appManager = app;
     app.init();
 });
