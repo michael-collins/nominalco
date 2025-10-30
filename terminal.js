@@ -192,7 +192,7 @@ class TerminalPrompt {
                 font-size: 14px;
                 display: flex;
                 flex-direction: column;
-                z-index: 10000;
+                z-index: 99999;
                 box-sizing: border-box;
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 transform: translateY(100%);
@@ -1627,7 +1627,7 @@ class TerminalPrompt {
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.95);
-                z-index: 10000;
+                z-index: 50000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -1775,7 +1775,7 @@ class TerminalPrompt {
                 width: 100%;
                 height: 100%;
                 background: rgba(255, 255, 255, 0.9);
-                z-index: 10000;
+                z-index: 50000;
                 display: flex;
                 align-items: center;
                 justify-content: center;
