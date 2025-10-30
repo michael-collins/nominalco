@@ -3,8 +3,11 @@ site.title,nominalco
 site.logoHeavy,nominal
 site.logoLight,co
 nav.work,Work
+nav.work.url,#work
 nav.about,About
+nav.about.url,#about
 nav.contact,Contact
+nav.contact.url,#contact
 hero.title,Multi-disciplinary art and design studio.
 hero.subtitle,We design objects, interfaces, and ideas.
 work.title,Selected Work
