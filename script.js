@@ -211,8 +211,11 @@ class ContentManager {
             'site.logoHeavy': 'nominal',
             'site.logoLight': 'co',
             'nav.work': 'Work',
+            'nav.work.url': '#work',
             'nav.about': 'About',
+            'nav.about.url': '#about',
             'nav.contact': 'Contact',
+            'nav.contact.url': '#contact',
             'hero.title': 'Multi-disciplinary art and design studio.',
             'hero.subtitle': 'We design objects, interfaces, and ideas.',
             'work.title': 'Selected Work',
@@ -283,7 +286,64 @@ class ContentManager {
             if (contentValue) {
                 element.textContent = contentValue;
             }
+
+            // Check if element also has data-url attribute for href updates
+            const urlKey = element.getAttribute('data-url');
+            if (urlKey) {
+                const urlValue = this.content[urlKey] || this.getDefaultContent()[urlKey];
+                if (urlValue && element.tagName.toLowerCase() === 'a') {
+                    element.setAttribute('href', urlValue);
+                }
+            }
         });
+
+        // After applying content, check for any navigation links that might be external
+        // This ensures external links get proper attributes
+        setTimeout(() => {
+            this.updateNavigationLinks();
+        }, 100);
+    }
+
+    updateNavigationLinks() {
+        // Check all navigation links for external URLs
+        document.querySelectorAll('.nav-links a, .footer-links a').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && this.isExternalLink(href)) {
+                // Add target="_blank" for external links if not already set
+                if (!link.hasAttribute('target')) {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+        });
+    }
+
+    isExternalLink(href) {
+        // Check if link is external (absolute URL)
+        try {
+            // If href starts with http:// or https://, it's absolute
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                return true;
+            }
+            
+            // If href starts with //, it's protocol-relative absolute
+            if (href.startsWith('//')) {
+                return true;
+            }
+            
+            // If href contains a domain (has dots and no slashes before the first dot)
+            if (href.includes('.') && !href.startsWith('/') && !href.startsWith('#')) {
+                const beforeFirstSlash = href.split('/')[0];
+                if (beforeFirstSlash.includes('.')) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            // If URL parsing fails, assume it's internal
+            return false;
+        }
     }
 
     applyDynamicContent() {
@@ -585,9 +645,9 @@ class FooterManager {
                 a.textContent = link.text;
                 
                 // Add target="_blank" for external links
-                if (link.url.startsWith('http')) {
+                if (this.isExternalLink(link.url)) {
                     a.target = '_blank';
-                    a.rel = 'noopener';
+                    a.rel = 'noopener noreferrer';
                 }
                 
                 li.appendChild(a);
@@ -611,14 +671,42 @@ class FooterManager {
                 }
                 
                 // Add target="_blank" for external links (not email)
-                if (link.url.startsWith('http')) {
+                if (this.isExternalLink(link.url) && !link.url.startsWith('mailto:')) {
                     a.target = '_blank';
-                    a.rel = 'noopener';
+                    a.rel = 'noopener noreferrer';
                 }
                 
                 li.appendChild(a);
                 connectList.appendChild(li);
             });
+        }
+    }
+
+    isExternalLink(href) {
+        // Check if link is external (absolute URL)
+        try {
+            // If href starts with http:// or https://, it's absolute
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                return true;
+            }
+            
+            // If href starts with //, it's protocol-relative absolute
+            if (href.startsWith('//')) {
+                return true;
+            }
+            
+            // If href contains a domain (has dots and no slashes before the first dot)
+            if (href.includes('.') && !href.startsWith('/') && !href.startsWith('#') && !href.startsWith('mailto:')) {
+                const beforeFirstSlash = href.split('/')[0];
+                if (beforeFirstSlash.includes('.')) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            // If URL parsing fails, assume it's internal
+            return false;
         }
     }
 }
@@ -1212,8 +1300,19 @@ class PortfolioManager {
             }
             
             const jsonText = await response.text();
-            // Remove Google's JSONP wrapper
-            const cleanJson = jsonText.replace(/^.*?({.*}).*$/, '$1');
+            
+            // Google Sheets wraps JSON in: google.visualization.Query.setResponse({...});
+            // We need to extract just the JSON object
+            let cleanJson = jsonText;
+            
+            // Remove the callback wrapper
+            if (jsonText.includes('google.visualization.Query.setResponse(')) {
+                cleanJson = jsonText.substring(
+                    jsonText.indexOf('(') + 1,
+                    jsonText.lastIndexOf(');')
+                );
+            }
+            
             const data = JSON.parse(cleanJson);
             this.projects = this.transformGoogleSheetsData(data);
             
@@ -1256,15 +1355,21 @@ class PortfolioManager {
         const rows = googleData.table.rows;
         const projects = [];
 
+        // Helper function to safely get string value
+        const getStringValue = (value, defaultValue = '') => {
+            if (value === null || value === undefined) return defaultValue;
+            return String(value).trim();
+        };
+
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row.c || !row.c[1] || !row.c[1].v) continue; // Skip empty rows
 
-            const rawDescription = row.c[2]?.v?.trim() || '';
+            const rawDescription = getStringValue(row.c[2]?.v);
             const project = {
                 id: (i + 1), // Use row index + 1 for guaranteed unique ID
                 originalId: parseInt(row.c[0]?.v) || (i + 1), // Keep original ID for reference
-                title: row.c[1]?.v?.trim() || 'Untitled Project',
+                title: getStringValue(row.c[1]?.v, 'Untitled Project'),
                 description: rawDescription,
                 descriptionHtml: this.convertMarkdownToHtml(rawDescription),
                 image: this.processImageUrl(row.c[3]?.v),
@@ -1272,19 +1377,19 @@ class PortfolioManager {
                 detailImages: this.processDetailImages(row.c[5]?.v),
                 longDescription: this.processLongDescription(row.c[6]?.v),
                 // New dynamic fields for enhanced case studies
-                year: row.c[7]?.v?.trim() || new Date().getFullYear().toString(),
-                client: row.c[8]?.v?.trim() || '',
-                duration: row.c[9]?.v?.trim() || '',
-                teamSize: row.c[10]?.v?.trim() || '',
-                role: row.c[11]?.v?.trim() || '',
-                challenge: row.c[12]?.v?.trim() || '',
-                solution: row.c[13]?.v?.trim() || '',
-                results: row.c[14]?.v?.trim() || '',
+                year: getStringValue(row.c[7]?.v, new Date().getFullYear().toString()),
+                client: getStringValue(row.c[8]?.v),
+                duration: getStringValue(row.c[9]?.v),
+                teamSize: getStringValue(row.c[10]?.v),
+                role: getStringValue(row.c[11]?.v),
+                challenge: getStringValue(row.c[12]?.v),
+                solution: getStringValue(row.c[13]?.v),
+                results: getStringValue(row.c[14]?.v),
                 metrics: this.processMetrics(row.c[15]?.v),
-                category: row.c[16]?.v?.trim() || (row.c[4]?.v?.split(',')[0]?.trim() || 'Design'),
-                featured: row.c[17]?.v?.toLowerCase() === 'true' || false,
-                status: row.c[18]?.v?.trim() || 'completed',
-                shopifyButton: row.c[19]?.v?.trim() || ''
+                category: getStringValue(row.c[16]?.v) || (row.c[4]?.v?.split?.(',')[0]?.trim() || 'Design'),
+                featured: String(row.c[17]?.v || '').toLowerCase() === 'true',
+                status: getStringValue(row.c[18]?.v, 'completed'),
+                shopifyButton: getStringValue(row.c[19]?.v)
             };
 
             projects.push(project);
@@ -1816,7 +1921,7 @@ class PortfolioManager {
     }
 
     setupSmoothScrolling() {
-        // Smooth scrolling for navigation links
+        // Smooth scrolling for navigation links - only for internal anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -1832,6 +1937,46 @@ class PortfolioManager {
                 }
             });
         });
+
+        // Handle external links - ensure they open properly
+        document.querySelectorAll('a').forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && this.isExternalLink(href)) {
+                // Add target="_blank" for external links if not already set
+                if (!link.hasAttribute('target')) {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                }
+            }
+        });
+    }
+
+    isExternalLink(href) {
+        // Check if link is external (absolute URL)
+        try {
+            // If href starts with http:// or https://, it's absolute
+            if (href.startsWith('http://') || href.startsWith('https://')) {
+                return true;
+            }
+            
+            // If href starts with //, it's protocol-relative absolute
+            if (href.startsWith('//')) {
+                return true;
+            }
+            
+            // If href contains a domain (has dots and no slashes before the first dot)
+            if (href.includes('.') && !href.startsWith('/') && !href.startsWith('#')) {
+                const beforeFirstSlash = href.split('/')[0];
+                if (beforeFirstSlash.includes('.')) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (error) {
+            // If URL parsing fails, assume it's internal
+            return false;
+        }
     }
 
     setupMobileMenu() {
