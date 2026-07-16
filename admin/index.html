@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
     <title>Content Manager — nominalco</title>
+    <style>
+      /* Sveltia's token dialog tells you to paste a token but doesn't link to
+         GitHub's token page (still true as of 0.171.0), so surface one here.
+         Tokens expire, so this saves hunting for the URL each renewal. */
+      #pat-link {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10000;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border: 1px solid rgba(128, 128, 128, 0.4);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #24292f;
+        font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        text-decoration: none;
+        backdrop-filter: blur(4px);
+      }
+
+      #pat-link:hover {
+        border-color: rgba(128, 128, 128, 0.8);
+        text-decoration: underline;
+      }
+
+      /* Must be explicit: the display rule above would otherwise defeat [hidden]. */
+      #pat-link[hidden] {
+        display: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #pat-link {
+          background: rgba(32, 32, 32, 0.9);
+          color: #e6edf3;
+        }
+      }
+    </style>
   </head>
   <body>
     <!--
@@ -13,5 +53,36 @@
       config.yml in this same folder defines the collections.
     -->
     <script src="https://unpkg.com/@sveltia/cms@0.171.0/dist/sveltia-cms.js"></script>
+
+    <!-- `contents=write` pre-selects the only permission the CMS needs.
+         Sveltia builds this same URL internally but never renders it. -->
+    <a
+      id="pat-link"
+      href="https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Opens GitHub with the token name and the required permission (Contents: Read and write) pre-selected. Scope it to michael-collins/nominalco only."
+      hidden
+    >
+      🔑 Generate a GitHub token
+    </a>
+
+    <script>
+      // Only show the link while signed out — that's the only time it's useful.
+      // Sveltia records the signed-in user under this localStorage key. If the
+      // key ever changes upstream, the link simply stays visible.
+      (function () {
+        var link = document.getElementById('pat-link');
+
+        var sync = function () {
+          link.hidden = localStorage.getItem('sveltia-cms.user') !== null;
+        };
+
+        sync();
+        // Sign-in happens in-page without a reload, and the `storage` event only
+        // fires for other tabs, so poll rather than listen.
+        setInterval(sync, 1000);
+      })();
+    </script>
   </body>
 </html>
