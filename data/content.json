@@ -1,0 +1,37 @@
+{
+  "site": {
+    "title": "nominalco",
+    "logoHeavy": "nominal",
+    "logoLight": "co"
+  },
+  "hero": {
+    "title": "nominalco is a multi-disciplinary design studio",
+    "subtitle": ""
+  },
+  "work": {
+    "title": "Projects"
+  },
+  "about": {
+    "title": "A few notes...",
+    "paragraph1": "nominalco is a creative practice specializing in the development of functional, bold, and appealing artifacts, stories, and experiences. We love materials. Our projects are made from metal, wood, fabric, concrete, cables, code, pixels and paper. We apply reseach, universal design principles & methods, engineering, and attention to detail to arrive at unique aesthetics and engaging interactivty.",
+    "paragraph2": "no•min•al: Within design tolerance specifications."
+  },
+  "contact": {
+    "title": "Contact",
+    "email": "hello@nominalco.com"
+  },
+  "nav": {
+    "work": {
+      "label": "Work",
+      "url": "#work"
+    },
+    "about": {
+      "label": "About",
+      "url": "#about"
+    },
+    "contact": {
+      "label": "Contact",
+      "url": "#contact"
+    }
+  }
+}

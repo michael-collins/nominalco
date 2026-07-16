@@ -794,6 +794,10 @@ body {
 .case-study-container {
     width: 100%;
     min-height: 100vh;
+    /* Contains the trailing section's bottom margin. Without this it collapses
+       through and adds scroll height below min-height, so every case study
+       showed a scrollbar even when the content fit. */
+    display: flow-root;
 }
 
 /* Navigation Header */
