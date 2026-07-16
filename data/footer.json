@@ -1,0 +1,34 @@
+{
+  "logo": {
+    "heavy": "nominal",
+    "light": "co"
+  },
+  "tagline": "Crafting responsibly",
+  "sections": {
+    "workTitle": "Work",
+    "connectTitle": "Connect"
+  },
+  "cta": {
+    "title": "Ready to start a project?",
+    "button": "Let's talk",
+    "disabled": true
+  },
+  "copyright": "© 2025 nominalco LLC. All rights reserved.",
+  "signature": "Made in PA",
+  "links": {
+    "work": [
+      {
+        "text": "Projects",
+        "url": "#work",
+        "key": "portfolio"
+      }
+    ],
+    "connect": [
+      {
+        "text": "hello@nominalco.com",
+        "url": "mailto:hello@nominalco.com",
+        "key": "email"
+      }
+    ]
+  }
+}

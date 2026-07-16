@@ -1,0 +1,188 @@
+# yaml-language-server: $schema=https://unpkg.com/@sveltia/cms/schema/sveltia-cms.json
+# Sveltia CMS configuration for nominalco
+# Docs: https://sveltiacms.app  |  Mostly Netlify/Decap-CMS compatible, but the
+# schema above is stricter — it flags Decap-only options Sveltia doesn't accept.
+
+backend:
+  name: github
+  repo: michael-collins/nominalco
+  branch: main
+
+# Local editing (Chromium browser): serve the site, open /admin/, and click
+# "Work with Local Repository". No proxy server or auth needed locally.
+
+# Uploaded media is saved to the repo's /images folder. The public path must
+# match where the site is served — currently the subpath /nominalco/ on
+# michaelcollins.xyz. If you move to a root domain, change public_folder to
+# "/images".
+media_folder: "images"
+public_folder: "/nominalco/images"
+
+collections:
+  # ---------------------------------------------------------------------------
+  # Projects — the portfolio items shown on the site (data/projects.json)
+  # ---------------------------------------------------------------------------
+  - name: "projects"
+    label: "Projects"
+    files:
+      - name: "projects"
+        label: "All Projects"
+        file: "data/projects.json"
+        fields:
+          - name: "projects"
+            label: "Projects"
+            label_singular: "Project"
+            widget: "list"
+            summary: "{{fields.title}}"
+            fields:
+              - { name: "title", label: "Title", widget: "string" }
+              - name: "status"
+                label: "Status"
+                widget: "select"
+                options: ["completed", "ongoing"]
+                default: "completed"
+              - { name: "featured", label: "Featured", widget: "boolean", default: false, required: false }
+              - { name: "year", label: "Year", widget: "string", required: false }
+              - { name: "category", label: "Category", widget: "string", required: false, hint: "Optional. Defaults to the first tag if left blank." }
+              - { name: "image", label: "Cover image", widget: "image", choose_url: true, required: false }
+              - { name: "tags", label: "Tags", widget: "list", required: false }
+              - name: "description"
+                label: "Description"
+                widget: "markdown"
+                hint: "Main body shown in the case study. Supports headings (#) and bullet lists (-)."
+              - { name: "detailImages", label: "Detail images", widget: "list", field: { name: "image", label: "Image", widget: "image", choose_url: true }, required: false }
+              - { name: "longDescription", label: "Long description", widget: "markdown", required: false }
+              - { name: "client", label: "Client", widget: "string", required: false }
+              - { name: "challenge", label: "Challenge", widget: "text", required: false }
+              - { name: "solution", label: "Solution", widget: "text", required: false }
+              - { name: "results", label: "Results", widget: "text", required: false }
+              - name: "metrics"
+                label: "Metrics"
+                widget: "list"
+                required: false
+                label_singular: "Metric"
+                summary: "{{fields.value}} {{fields.label}}"
+                fields:
+                  - { name: "value", label: "Value", widget: "string", hint: "e.g. 40%" }
+                  - { name: "label", label: "Label", widget: "string", hint: "e.g. Conversion increase" }
+              - { name: "shopifyButton", label: "Shopify button embed", widget: "text", required: false }
+              - { name: "id", label: "ID (optional reference)", widget: "number", value_type: "int", required: false }
+
+  # ---------------------------------------------------------------------------
+  # Site Content — headings, hero, about, nav, contact (data/content.json)
+  # ---------------------------------------------------------------------------
+  - name: "content"
+    label: "Site Content"
+    files:
+      - name: "content"
+        label: "Site Content"
+        file: "data/content.json"
+        fields:
+          - name: "site"
+            label: "Site & Logo"
+            widget: "object"
+            fields:
+              - { name: "title", label: "Browser title", widget: "string" }
+              - { name: "logoHeavy", label: "Logo — bold part", widget: "string" }
+              - { name: "logoLight", label: "Logo — light part", widget: "string" }
+          - name: "hero"
+            label: "Hero"
+            widget: "object"
+            fields:
+              - { name: "title", label: "Headline", widget: "text" }
+              - { name: "subtitle", label: "Subtitle", widget: "text", required: false }
+          - name: "work"
+            label: "Work Section"
+            widget: "object"
+            fields:
+              - { name: "title", label: "Section title", widget: "string" }
+          - name: "about"
+            label: "About Section"
+            widget: "object"
+            fields:
+              - { name: "title", label: "Section title", widget: "string" }
+              - { name: "paragraph1", label: "Paragraph 1", widget: "text" }
+              - { name: "paragraph2", label: "Paragraph 2", widget: "text", required: false }
+          - name: "contact"
+            label: "Contact"
+            widget: "object"
+            fields:
+              - { name: "title", label: "Section title", widget: "string" }
+              - { name: "email", label: "Email", widget: "string" }
+          - name: "nav"
+            label: "Navigation"
+            widget: "object"
+            fields:
+              - name: "work"
+                label: "Work link"
+                widget: "object"
+                fields:
+                  - { name: "label", label: "Label", widget: "string" }
+                  - { name: "url", label: "URL", widget: "string" }
+              - name: "about"
+                label: "About link"
+                widget: "object"
+                fields:
+                  - { name: "label", label: "Label", widget: "string" }
+                  - { name: "url", label: "URL", widget: "string" }
+              - name: "contact"
+                label: "Contact link"
+                widget: "object"
+                fields:
+                  - { name: "label", label: "Label", widget: "string" }
+                  - { name: "url", label: "URL", widget: "string" }
+
+  # ---------------------------------------------------------------------------
+  # Footer — logo, tagline, CTA, link columns (data/footer.json)
+  # ---------------------------------------------------------------------------
+  - name: "footer"
+    label: "Footer"
+    files:
+      - name: "footer"
+        label: "Footer"
+        file: "data/footer.json"
+        fields:
+          - name: "logo"
+            label: "Footer logo"
+            widget: "object"
+            fields:
+              - { name: "heavy", label: "Bold part", widget: "string" }
+              - { name: "light", label: "Light part", widget: "string" }
+          - { name: "tagline", label: "Tagline", widget: "string", required: false }
+          - name: "sections"
+            label: "Column titles"
+            widget: "object"
+            fields:
+              - { name: "workTitle", label: "Left column title", widget: "string" }
+              - { name: "connectTitle", label: "Right column title", widget: "string" }
+          - name: "cta"
+            label: "Call to action"
+            widget: "object"
+            fields:
+              - { name: "title", label: "CTA title", widget: "string", required: false }
+              - { name: "button", label: "Button text", widget: "string", required: false }
+              - { name: "disabled", label: "Hide CTA", widget: "boolean", default: true }
+          - { name: "copyright", label: "Copyright", widget: "string", required: false }
+          - { name: "signature", label: "Signature", widget: "string", required: false }
+          - name: "links"
+            label: "Footer links"
+            widget: "object"
+            fields:
+              - name: "work"
+                label: "Left column links"
+                widget: "list"
+                required: false
+                summary: "{{fields.text}}"
+                fields:
+                  - { name: "text", label: "Text", widget: "string" }
+                  - { name: "url", label: "URL", widget: "string" }
+                  - { name: "key", label: "Key", widget: "string", required: false }
+              - name: "connect"
+                label: "Right column links"
+                widget: "list"
+                required: false
+                summary: "{{fields.text}}"
+                fields:
+                  - { name: "text", label: "Text", widget: "string" }
+                  - { name: "url", label: "URL", widget: "string" }
+                  - { name: "key", label: "Key", widget: "string", required: false }

@@ -97,6 +97,19 @@ class ContentManager {
     }
 
     async loadContent() {
+        // Primary source: local data/content.json (managed via /admin — Sveltia CMS).
+        try {
+            const response = await fetch(`data/content.json?t=${Date.now()}`);
+            if (!response.ok) throw new Error('content.json not found');
+            const json = await response.json();
+            this.content = this.flattenContent(json);
+            console.log('✅ Content loaded from data/content.json');
+            return;
+        } catch (localError) {
+            console.warn('⚠️ Could not load data/content.json, falling back to Google Sheets:', localError.message);
+        }
+
+        // Fallback: legacy Google Sheets source. Safe to delete once /admin is in use.
         try {
             // Pull content from second Google Sheets tab
             const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
@@ -203,6 +216,32 @@ class ContentManager {
         });
 
         return content;
+    }
+
+    // Flatten the nested data/content.json into the dotted keys the site expects.
+    flattenContent(json) {
+        const c = json || {};
+        const get = (obj, key, def = '') => (obj && obj[key] != null ? obj[key] : def);
+        const nav = c.nav || {};
+        return {
+            'site.title': get(c.site, 'title'),
+            'site.logoHeavy': get(c.site, 'logoHeavy'),
+            'site.logoLight': get(c.site, 'logoLight'),
+            'hero.title': get(c.hero, 'title'),
+            'hero.subtitle': get(c.hero, 'subtitle'),
+            'work.title': get(c.work, 'title'),
+            'about.title': get(c.about, 'title'),
+            'about.paragraph1': get(c.about, 'paragraph1'),
+            'about.paragraph2': get(c.about, 'paragraph2'),
+            'contact.title': get(c.contact, 'title'),
+            'contact.email': get(c.contact, 'email'),
+            'nav.work': get(nav.work, 'label', 'Work'),
+            'nav.work.url': get(nav.work, 'url', '#work'),
+            'nav.about': get(nav.about, 'label', 'About'),
+            'nav.about.url': get(nav.about, 'url', '#about'),
+            'nav.contact': get(nav.contact, 'label', 'Contact'),
+            'nav.contact.url': get(nav.contact, 'url', '#contact')
+        };
     }
 
     getDefaultContent() {
@@ -410,6 +449,19 @@ class FooterManager {
     }
 
     async loadFooterData() {
+        // Primary source: local data/footer.json (managed via /admin — Sveltia CMS).
+        try {
+            const response = await fetch(`data/footer.json?t=${Date.now()}`);
+            if (!response.ok) throw new Error('footer.json not found');
+            const json = await response.json();
+            this.footerData = this.buildFooterData(json);
+            console.log('✅ Footer data loaded from data/footer.json');
+            return;
+        } catch (localError) {
+            console.warn('⚠️ Could not load data/footer.json, falling back to Google Sheets:', localError.message);
+        }
+
+        // Fallback: legacy Google Sheets source. Safe to delete once /admin is in use.
         try {
             // Pull footer data from Footer tab in Google Sheets
             const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
@@ -542,6 +594,38 @@ class FooterManager {
         });
 
         return footerData;
+    }
+
+    // Build the { content: {dotted keys}, links } shape the site expects from
+    // the nested data/footer.json.
+    buildFooterData(json) {
+        const f = json || {};
+        const logo = f.logo || {};
+        const sections = f.sections || {};
+        const cta = f.cta || {};
+        const links = f.links || {};
+        const isDisabled = cta.disabled === true || String(cta.disabled).toLowerCase() === 'true';
+        const mapLinks = arr => (Array.isArray(arr) ? arr : [])
+            .filter(l => l && (l.text || l.url))
+            .map(l => ({ text: l.text || '', url: l.url || '', key: l.key || '' }));
+        return {
+            content: {
+                'logo.heavy': logo.heavy || 'nominal',
+                'logo.light': logo.light || 'co',
+                'tagline': f.tagline || '',
+                'work.title': sections.workTitle || 'Work',
+                'connect.title': sections.connectTitle || 'Connect',
+                'cta.title': cta.title || '',
+                'cta.button': cta.button || '',
+                'cta.disabled': isDisabled ? 'true' : 'false',
+                'copyright': f.copyright || '',
+                'signature': f.signature || ''
+            },
+            links: {
+                work: mapLinks(links.work),
+                connect: mapLinks(links.connect)
+            }
+        };
     }
 
     getDefaultFooterData() {
@@ -1326,7 +1410,7 @@ class CaseStudyModal {
         
         setTimeout(() => {
             this.modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
+            document.body.style.overflow = '';
             
             // Return focus to the previously focused element
             if (this.previouslyFocusedElement) {
@@ -1474,6 +1558,21 @@ class PortfolioManager {
     }
 
     async loadProjects() {
+        // Primary source: local data/projects.json (managed via /admin — Sveltia CMS).
+        try {
+            const response = await fetch(`data/projects.json?t=${Date.now()}`);
+            if (!response.ok) throw new Error('projects.json not found');
+            const json = await response.json();
+            const list = Array.isArray(json) ? json : (json && json.projects);
+            this.projects = this.transformLocalProjects(list);
+            if (!this.projects.length) throw new Error('projects.json is empty');
+            console.log('✅ Projects loaded from data/projects.json');
+            return;
+        } catch (localError) {
+            console.warn('⚠️ Could not load data/projects.json, falling back to Google Sheets:', localError.message);
+        }
+
+        // Fallback: legacy Google Sheets source. Safe to delete once /admin is in use.
         try {
             // Try JSON format first (better formatting preservation)
             const SHEET_ID = '10Ze__9S_rwj_HWnJEMH-pArREc_XheP5NCJNohJVtkc';
@@ -1536,6 +1635,50 @@ class PortfolioManager {
                 }
             }
         }
+    }
+
+    // Map data/projects.json entries to the internal project shape used by the
+    // renderer and case-study modal. Accepts arrays (tags/detailImages/metrics)
+    // from the CMS, but tolerates the old comma-separated strings too.
+    transformLocalProjects(list) {
+        return (Array.isArray(list) ? list : [])
+            .filter(p => p && (p.title || '').toString().trim() !== '')
+            .map((p, index) => {
+                const rawDescription = (p.description || '').toString();
+                const tags = Array.isArray(p.tags)
+                    ? p.tags.map(t => (t || '').toString().trim()).filter(Boolean)
+                    : this.processTags(p.tags);
+                const detailImages = Array.isArray(p.detailImages)
+                    ? p.detailImages.map(u => this.processImageUrl(u)).filter(Boolean)
+                    : this.processDetailImages(p.detailImages);
+                const metrics = Array.isArray(p.metrics)
+                    ? p.metrics.filter(m => m && (m.value || m.label)).map(m => ({ value: (m.value || '').toString(), label: (m.label || '').toString() }))
+                    : this.processMetrics(p.metrics);
+                return {
+                    id: index + 1,
+                    originalId: parseInt(p.id) || (index + 1),
+                    title: (p.title || 'Untitled Project').toString().trim(),
+                    description: rawDescription,
+                    descriptionHtml: this.convertMarkdownToHtml(rawDescription),
+                    image: this.processImageUrl(p.image),
+                    tags,
+                    detailImages,
+                    longDescription: this.processLongDescription(p.longDescription),
+                    year: (p.year || new Date().getFullYear().toString()).toString(),
+                    client: (p.client || '').toString(),
+                    duration: (p.duration || '').toString(),
+                    teamSize: (p.teamSize || '').toString(),
+                    role: (p.role || '').toString(),
+                    challenge: (p.challenge || '').toString(),
+                    solution: (p.solution || '').toString(),
+                    results: (p.results || '').toString(),
+                    metrics,
+                    category: (p.category || '').toString().trim() || (tags[0] || 'Design'),
+                    featured: p.featured === true || String(p.featured).toLowerCase() === 'true',
+                    status: (p.status || 'completed').toString(),
+                    shopifyButton: (p.shopifyButton || '').toString()
+                };
+            });
     }
 
     transformGoogleSheetsData(googleData) {

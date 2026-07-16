@@ -1,0 +1,53 @@
+{
+  "projects": [
+    {
+      "id": 2,
+      "title": "Generative 3D Gallery",
+      "description": "This in-progress project is an experimental, browser-based exhibition platform that dynamically builds architectural spaces from participant data. Designed as both a creative research project and teaching tool in collaboration with an art faculty and scholar, it explores procedural generation's role in shaping new modes of curating and experiencing art. Using a CMS backend connected to a real-time Three.js environment, the gallery automatically constructs rooms, layouts, and contextual elements based on uploaded works, artist profiles, and thematic parameters. 3D assets are modeled, textured, and animated in Blender, the popular open-source 3D production software. The result is an on-demand web-based work exhibition paltform that evolves with each group of participants' needs. \n\n### Process\n\n- Stakeholder analysis and project guidance\n- Ideation and technical exploration\n- 3D asset production, CMS configuration, and threejs web programming (upcoming)\n- Documentation (upcoming)",
+      "image": "https://raw.githubusercontent.com/michael-collins/nominalco/refs/heads/main/images/gen3dgallery01.jpg",
+      "tags": [
+        "web",
+        "generative 3D",
+        "realtime"
+      ],
+      "detailImages": [],
+      "longDescription": "",
+      "year": "2025",
+      "client": "",
+      "challenge": "",
+      "solution": "",
+      "results": "",
+      "metrics": [],
+      "category": "",
+      "featured": false,
+      "status": "ongoing",
+      "shopifyButton": ""
+    },
+    {
+      "id": 1,
+      "title": "L-Track Adapter",
+      "description": "Mounting hardware inspired by DIY vanlife.\n\nThe convergence of advanced materials, battery and solar technologies, remote work, ubiquitous wireless internet, and inspirational social‑media travel content has ignited a boom in camper‑van and RV adventures. From grassroots DIY upfits to turnkey luxury conversions, builders are creating ever more adaptable and comfortable mobile living spaces — and yet most mounting hardware remains purely functional, with little attention paid to form.\n\nIn our latest studio project, we set out to elevate the humble L‑track fitting by seamlessly integrating it with popular 80/20 T‑slot profiles. We’ve crafted a solution that harmonizes function, affordability, and refined visual appeal. The result is an elegant interface component that not only performs flawlessly under load but also complements the clean, modern interiors favored by today’s DIY vanlifers. This work adds a touch of design sophistication to the rapidly growing mobile‑living movement.\n\n### Process\n\n- Analysis of existing product landscape\n- Formal design exploration\n- Prototyping & testing\n- Design variations and first article production",
+      "image": "https://raw.githubusercontent.com/michael-collins/nominalco/7ba430a59af6b1a6fdacfaa14cf0de7ba3c57efc/images/trailmounts-cover.jpeg",
+      "tags": [
+        "product",
+        "system"
+      ],
+      "detailImages": [
+        "https://raw.githubusercontent.com/michael-collins/nominalco/7ba430a59af6b1a6fdacfaa14cf0de7ba3c57efc/images/trailmounts-1.jpeg",
+        "https://raw.githubusercontent.com/michael-collins/nominalco/7ba430a59af6b1a6fdacfaa14cf0de7ba3c57efc/images/trailmounts-2.jpeg",
+        "https://raw.githubusercontent.com/michael-collins/nominalco/7ba430a59af6b1a6fdacfaa14cf0de7ba3c57efc/images/trailmounts-3.jpeg"
+      ],
+      "longDescription": "",
+      "year": "2025",
+      "client": "",
+      "challenge": "",
+      "solution": "",
+      "results": "",
+      "metrics": [],
+      "category": "",
+      "featured": false,
+      "status": "completed",
+      "shopifyButton": ""
+    }
+  ]
+}
