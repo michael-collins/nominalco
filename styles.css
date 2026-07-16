@@ -324,8 +324,9 @@ body {
     grid-template-columns: 1fr;
     gap: 0; /* Remove gaps for full-width effect */
     margin-bottom: 0;
-    width: 100vw; /* Full viewport width */
-    margin-left: calc(-50vw + 50%); /* Center and extend to edges */
+    /* Edge-to-edge via the full-width .work section, not 100vw — 100vw counts
+       the scrollbar, so it overflowed the page by the scrollbar's width. */
+    width: 100%;
 }
 
 .project-card {
@@ -1694,7 +1695,6 @@ body {
     .projects-grid {
         grid-template-columns: 1fr;
         gap: 0; /* Keep full-width effect on mobile */
-        margin-left: calc(-50vw + 50%); /* Maintain edge-to-edge on mobile */
     }
 
     .project-card {

@@ -31,18 +31,42 @@ System Access API — no server-side auth, edits go straight to your local files
    git add data images && git commit -m "Update content" && git push
    ```
 
-## Option B — Edit online (commits straight to GitHub)
+## Option B — Edit online with an access token (recommended over OAuth)
 
-Editing at the deployed `/admin/` URL needs a GitHub OAuth handler, because the
-browser can't hold your GitHub secret. The standard free option is Sveltia's own
-auth worker on Cloudflare (one-click deploy):
+At the deployed `/admin/` URL, use **"Sign In Using Access Token"**. No server,
+no OAuth app, no config changes. Sveltia recommends this whenever the editors are
+just you or other technical users.
+
+1. Click the **🔑 Generate a GitHub token** link at the bottom of the sign-in
+   screen. It opens GitHub with the token name and the one required permission
+   already selected. (Sveltia's own dialog doesn't link to this — hence the link
+   on our page. Direct URL:
+   <https://github.com/settings/personal-access-tokens/new?name=Sveltia+CMS&contents=write>)
+2. Set **Repository access → Only select repositories → `michael-collins/nominalco`**.
+   Permissions needed:
+   - **Contents: Read and write** — the only one you pick
+   - **Metadata: Read-only** — GitHub enables this automatically
+3. Pick an expiration (90 days is reasonable), generate, and paste the token into
+   the CMS. It's kept in your browser's local storage, so treat it as disposable
+   and regenerate when it lapses.
+
+Note: **"Sign In with GitHub" will not complete** — that button needs an OAuth
+handler, which isn't set up (see Option C).
+
+## Option C — OAuth (only if a non-technical editor needs access)
+
+Only worth it if someone who shouldn't manage their own token needs to sign in.
+A browser can't hold a client secret, so this requires a small auth worker:
 
 1. Deploy **sveltia-cms-auth**: https://github.com/sveltia/sveltia-cms-auth
-   (Cloudflare Workers → "Deploy with Workers", follow the prompts).
-2. Create a GitHub OAuth App (Settings → Developer settings → OAuth Apps):
-   - **Authorization callback URL** = your worker URL + `/callback`
-   - Put the Client ID / Secret into the worker's environment variables.
-3. Add the worker's base URL to `admin/config.yml` under `backend`:
+   (Cloudflare Workers → "Deploy with Workers"). Note the worker URL.
+2. Register an OAuth app at https://github.com/settings/applications/new:
+   - **Authorization callback URL** = `<YOUR_WORKER_URL>/callback` (must be exact)
+   - Generate a client secret.
+3. In the worker's Settings → Variables, set `GITHUB_CLIENT_ID`,
+   `GITHUB_CLIENT_SECRET` (click **Encrypt**), and optionally
+   `ALLOWED_DOMAINS=michaelcollins.xyz`.
+4. Add the worker URL to `admin/config.yml` under `backend`:
    ```yaml
    backend:
      name: github
@@ -50,11 +74,9 @@ auth worker on Cloudflare (one-click deploy):
      branch: main
      base_url: https://<your-worker-subdomain>.workers.dev
    ```
-4. Visit `https://michaelcollins.xyz/nominalco/admin/` and **Sign In with GitHub**.
 
-Until the worker is set up, "Sign In with GitHub" online won't complete — use
-Option A. (A Personal Access Token via "Sign In Using Access Token" also works
-without a worker, if you prefer.)
+GitHub is adding client-side PKCE auth, after which this worker becomes
+unnecessary: https://github.com/github/roadmap/issues/1153
 
 ---
 
